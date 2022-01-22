@@ -31,19 +31,18 @@ object Wordle {
   }
 
   object Assay {
-    def assayFor(candidateWords: Set[Word], possibleWords: Set[Word]): Future[Assay] = {
-      val sortedPossibleWords: Seq[Word] = possibleWords.toSeq.sorted
+    def assayFor(possibleWords: PossibleWords): Future[Assay] = {
       for {
-        possibleWordsWithFeedbackByCandidateWord <- Future.traverse(candidateWords) { candidateWord =>
-          Future(candidateWord -> evaluateCandidate(candidateWord, sortedPossibleWords))
+        possibleWordsWithFeedbackByCandidateWord <- Future.traverse(possibleWords.corpus.words) { candidateWord =>
+          Future(candidateWord -> evaluateCandidate(candidateWord, possibleWords))
         }
       } yield Assay(possibleWordsWithFeedbackByCandidateWord.toMap)
     }
 
-    private def evaluateCandidate(candidateWord: Word, sortedPossibleWords: Seq[Word]): Map[WordFeedback, RoaringBitmap] = {
-      sortedPossibleWords.zipWithIndex.groupUp { case (possibleWord, possibleWordIndex) =>
-        WordFeedback.feedbackFor(candidateWord, possibleWord)
-      }(bigOleThing => RoaringBitmap.bitmapOf(bigOleThing.map(_._2): _*))
+    private def evaluateCandidate(candidateWord: Word, possibleWords: PossibleWords): Map[WordFeedback, RoaringBitmap] = {
+      possibleWords.idsOfPossibleWords.asScala.map(_.toInt).groupUp { idOfPossibleWork =>
+        WordFeedback.feedbackFor(candidateWord, possibleWords.corpus.orderedWords(idOfPossibleWork))
+      }(bigOleThing => RoaringBitmap.bitmapOf(bigOleThing.toArray: _*))
     }
   }
 

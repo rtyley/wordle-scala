@@ -10,10 +10,13 @@ import scala.concurrent.duration.Duration
 import concurrent.ExecutionContext.Implicits.global
 
 @main def main() = {
-  val wordleWords: Set[Word] =
+  val corpus: Corpus = Corpus(
     Files.readAllLines(Paths.get("/Users/roberto/wordle-five-letter-words.txt")).asScala.toSet
+  )
 
-  val assay = Await.result(Assay.assayFor(wordleWords, wordleWords), Duration.Inf)
+
+
+  val assay = Await.result(Assay.assayFor(PossibleWords.allWordsFrom(corpus)), Duration.Inf)
 
   // println(assay)
   println(assay.possibleWordsByFeedbackByCandidateWord.size)

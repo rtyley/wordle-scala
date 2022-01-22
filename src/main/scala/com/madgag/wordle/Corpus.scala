@@ -1,12 +1,18 @@
 package com.madgag.wordle
 
+import com.google.common.io.{CharStreams, Resources}
 import com.madgag.wordle.Wordle.Word
 
+import java.nio.charset.StandardCharsets.UTF_8
+import scala.jdk.CollectionConverters.*
+import java.nio.charset.{Charset, StandardCharsets}
 import java.nio.file.Path
 import scala.collection.immutable.ArraySeq
 import scala.util.hashing.MurmurHash3
 
-case class Corpus(words: Set[Word]) {
+case class Corpus(popularWords: Set[Word], unpopularWords: Set[Word]) {
+  val words: Set[Word] = popularWords ++ unpopularWords
+
   val numWords: Int = words.size
 
   val orderedWords: IndexedSeq[Word] = words.toIndexedSeq
@@ -14,4 +20,15 @@ case class Corpus(words: Set[Word]) {
   val hash: Int = MurmurHash3.orderedHashing.hash(orderedWords)
 
   val assayStoragePath: Path = Path.of("/tmp", s"$hash.json")
+}
+
+object Corpus {
+  def fromAsteriskFormat(wordsWithAsterisk: Iterable[String]): Corpus = {
+    val (popularWords, unpopularWords) = wordsWithAsterisk.partition(_.endsWith("*"))
+    Corpus(popularWords.toSet, unpopularWords.toSet)
+  }
+
+  def load(): Corpus = Corpus.fromAsteriskFormat(
+    Resources.asCharSource(getClass.getResource("/wordle-five-letter-words.txt"), UTF_8).readLines().asScala.take(1000)
+  )
 }

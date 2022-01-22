@@ -11,9 +11,7 @@ import concurrent.ExecutionContext.Implicits.global
 import scala.util.Random
 
 @main def main() = {
-  val corpus: Corpus = Corpus(
-    Files.readAllLines(Paths.get("/Users/roberto/wordle-five-letter-words.txt")).asScala.toSet
-  )
+  val corpus: Corpus = Corpus.load()
 
 
 

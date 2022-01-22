@@ -2,9 +2,12 @@ package com.madgag.wordle
 
 import com.madgag.scala.collection.decorators.*
 import com.madgag.wordle.LetterFeedback.*
-import scala.jdk.CollectionConverters._
+import org.roaringbitmap.RoaringBitmap
 
+import scala.jdk.CollectionConverters.*
 import java.nio.file.{Files, Paths}
+import scala.concurrent.Future
+import concurrent.ExecutionContext.Implicits.global
 
 object Wordle {
   val WordLength = 5
@@ -15,7 +18,7 @@ object Wordle {
 
   // type WordFeedback = Seq[LetterFeedback]
 
-  case class Assay(possibleWordsByFeedbackByCandidateWord: Map[Word,Map[WordFeedback,Set[Word]]])
+  case class Assay(possibleWordsByFeedbackByCandidateWord: Map[Word,Map[WordFeedback,RoaringBitmap]])
 
   case class Foo(remainingActualLetters: Map[Letter, Int], misplacedLetterIndices: Set[Int] = Set.empty) {
     def attemptTake(letter: Letter, letterIndex: Int): Foo = {
@@ -28,11 +31,20 @@ object Wordle {
   }
 
   object Assay {
-    def assayFor(candidateWords: Set[Word], possibleWords: Set[Word]): Assay = Assay((for {
-      candidateWord <- candidateWords
-    } yield candidateWord -> possibleWords.groupBy(possibleWord => WordFeedback.feedbackFor(candidateWord, possibleWord))).toMap
-      // .mapV(_ => Map.empty)
-    )
+    def assayFor(candidateWords: Set[Word], possibleWords: Set[Word]): Future[Assay] = {
+      val sortedPossibleWords: Seq[Word] = possibleWords.toSeq.sorted
+      for {
+        possibleWordsWithFeedbackByCandidateWord <- Future.traverse(candidateWords) { candidateWord =>
+          Future(candidateWord -> evaluateCandidate(candidateWord, sortedPossibleWords))
+        }
+      } yield Assay(possibleWordsWithFeedbackByCandidateWord.toMap)
+    }
+
+    private def evaluateCandidate(candidateWord: Word, sortedPossibleWords: Seq[Word]): Map[WordFeedback, RoaringBitmap] = {
+      sortedPossibleWords.zipWithIndex.groupUp { case (possibleWord, possibleWordIndex) =>
+        WordFeedback.feedbackFor(candidateWord, possibleWord)
+      }(bigOleThing => RoaringBitmap.bitmapOf(bigOleThing.map(_._2): _*))
+    }
   }
 
 }

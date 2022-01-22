@@ -23,6 +23,7 @@ class WordFeedbackTest extends AnyWordSpec with Matchers {
       println(feedbackFor("BAEEB", "ABTEY").emojis)
       println(evidenceFrom("CHORE", "CHICK").ansiColouredString)
       println(evidenceFrom("CHOCK", "CHICK").ansiColouredString)
+      println(evidenceFrom("duggs", "goats").ansiColouredString)
     }
   }
 }

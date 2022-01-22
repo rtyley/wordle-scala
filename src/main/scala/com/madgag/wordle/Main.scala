@@ -33,7 +33,7 @@ import scala.util.Random
       val guess: Word = currentAssay.candidateWordAssaysSortedByScore.head._1
       val evidence = Evidence.evidenceFrom(guess, targetWord)
       println(evidence)
-      if (!evidence.isSuccess && guessesRemaining>0) takeAGuess(currentAssay.updateWith(evidence), guessesRemaining-1 )
+      if (!evidence.isSuccess && guessesRemaining>1) takeAGuess(currentAssay.updateWith(evidence), guessesRemaining-1 )
     }
 
     takeAGuess(assay, 6)

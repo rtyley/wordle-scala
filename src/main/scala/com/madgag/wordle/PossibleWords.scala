@@ -9,4 +9,5 @@ object PossibleWords {
     corpus,
     RoaringBitmap.bitmapOfRange(0, corpus.numWords)
   )
+  
 }

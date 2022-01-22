@@ -15,6 +15,8 @@ class WordFeedback(val underlying: Int) extends AnyVal {
   }
   def emojis: String = toSeq.map(_.emoji).mkString
 
+  def isSuccess: Boolean = toSeq.forall(_ == Green)
+
   override def toString: Word = emojis
 }
 

@@ -11,18 +11,19 @@ import java.nio.file.Path
 import scala.collection.immutable.ArraySeq
 import scala.util.hashing.MurmurHash3
 
-case class Corpus(popularWords: Set[Word], unpopularWords: Set[Word]) {
-  val words: Set[Word] = popularWords ++ unpopularWords
+case class Corpus(commonWords: Set[Word], uncommonWords: Set[Word]) {
+  val allWordsEvenTheUncommonOnes: Set[Word] = commonWords ++ uncommonWords
 
-  val numWords: Int = words.size
+  val orderedCommonWords: IndexedSeq[Word] = commonWords.toIndexedSeq.sorted
+  val idsForAllCommonWords: RoaringBitmap = RoaringBitmap.bitmapOfRange(0, commonWords.size)
 
-  val orderedWords: IndexedSeq[Word] = words.toIndexedSeq
-
-  val hash: Int = MurmurHash3.orderedHashing.hash(orderedWords)
+  val hash: Int = MurmurHash3.orderedHashing.hash(allWordsEvenTheUncommonOnes.toSeq.sorted)
 
   val assayStoragePath: Path = Path.of("/tmp", s"$hash.json")
 
-  def humanReadable(bitMap: RoaringBitmap): String = bitMap.asScala.map(orderedWords(_)).mkString(",")
+  def humanReadable(bitMap: RoaringBitmap): String = humanReadableWordsFor(bitMap).mkString(",")
+
+  def humanReadableWordsFor(bitMap: RoaringBitmap): Iterable[Word] = bitMap.asScala.map(orderedCommonWords(_))
 }
 
 object Corpus {

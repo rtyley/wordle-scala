@@ -22,7 +22,8 @@ class WordFeedback(val underlying: Int) extends AnyVal {
 
 object WordFeedback {
   val numValues: Int = LetterFeedback.values.length
-
+  val CompleteSuccess: WordFeedback = WordFeedback(Seq.fill(WordLength)(Green))
+  
   def apply(letterFeedbacks: Seq[LetterFeedback]): WordFeedback = {
     require(letterFeedbacks.size == WordLength)
     new WordFeedback(

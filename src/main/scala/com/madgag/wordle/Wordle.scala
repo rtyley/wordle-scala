@@ -2,6 +2,8 @@ package com.madgag.wordle
 
 import com.madgag.scala.collection.decorators.*
 import com.madgag.wordle.LetterFeedback.*
+import com.madgag.wordle.WordFeedback.CompleteSuccess
+import com.madgag.wordle.CandidateAssay.OnlyCompleteSuccess
 import org.roaringbitmap.RoaringBitmap
 
 import scala.jdk.CollectionConverters.*
@@ -18,33 +20,21 @@ object Wordle {
 
   // type WordFeedback = Seq[LetterFeedback]
 
-  case class CandidateAssay(possibleActualWordsByFeedback: Map[WordFeedback,RoaringBitmap]) {
-    lazy val isImpossible: Boolean = possibleActualWordsByFeedback.values.forall(_.isEmpty)
-
-    lazy val score: Int = possibleActualWordsByFeedback.values.map { bitMap =>
-      val cardinality = bitMap.getCardinality
-      cardinality * cardinality
-    }.sum
-
-    def updateGiven(newSuperSetOfPossibleWords: RoaringBitmap): CandidateAssay = CandidateAssay(
-      possibleActualWordsByFeedback.view.mapValues {
-        originalWordPossibleGivenFeedback
-         => RoaringBitmap.and(originalWordPossibleGivenFeedback,newSuperSetOfPossibleWords)
-      }.filter(p => !p._2.isEmpty).toMap
-    )
-
-    def summariseFor(corpus: Corpus): String = (for (
-        (feedback, bitmap) <-possibleActualWordsByFeedback.toSeq.sortBy(_._2.getCardinality)
-      ) yield s"${feedback.emojis}:${corpus.humanReadable(bitmap)}").mkString("  ")
-
-    lazy val totalBitMapSize: Long = possibleActualWordsByFeedback.values.map(_.getSizeInBytes).sum
-  }
-
   case class Assay(possibleWords: PossibleWords, possibleWordsByFeedbackByCandidateWord: Map[Word,CandidateAssay]) {
+    val numCandidateWords: Int = possibleWordsByFeedbackByCandidateWord.size
+
+    protected val allBitMaps: Seq[RoaringBitmap] =
+      possibleWordsByFeedbackByCandidateWord.values.toSeq.flatMap(_.possibleActualWordsByFeedback.values)
+    protected val numDifferentBitMaps = allBitMaps.toSet.size
+    protected val numDifferentBitMapHashCodes = allBitMaps.map(_.hashCode).toSet.size
+
+
+    val bitmapDiagnostic = s"${allBitMaps.size} bitmaps - distinct=$numDifferentBitMaps hashCodes=$numDifferentBitMapHashCodes"
+
     lazy val candidateWordAssaysSortedByScore: Seq[(Word, CandidateAssay)] =
       possibleWordsByFeedbackByCandidateWord.toSeq.sortBy {
         case (word, ca) =>
-        (ca.score, !possibleWords.idsOfPossibleWords.contains(possibleWords.corpus.orderedWords.indexOf(word)))
+        (ca.score, !possibleWords.idsOfPossibleWords.contains(possibleWords.corpus.orderedCommonWords.indexOf(word)))
       }
 
     def updateWith(evidence: Evidence): Assay = {
@@ -55,7 +45,7 @@ object Wordle {
       Assay(
         updatedPossibleWords,
         possibleWordsByFeedbackByCandidateWord.mapV(_.updateGiven(updatedPossibleWords.idsOfPossibleWords)).filter {
-          case (_, ca) => !ca.isImpossible
+          case (_, ca) => !ca.canNotBeCorrectAndWouldRevealNoInformation
         }
       )
     }
@@ -83,7 +73,7 @@ object Wordle {
   object Assay {
     def assayFor(possibleWords: PossibleWords): Future[Assay] = {
       for {
-        possibleWordsWithFeedbackByCandidateWord <- Future.traverse(possibleWords.corpus.words) { candidateWord =>
+        possibleWordsWithFeedbackByCandidateWord <- Future.traverse(possibleWords.corpus.allWordsEvenTheUncommonOnes) { candidateWord =>
           Future(candidateWord -> evaluateCandidate(candidateWord, possibleWords))
         }
       } yield {
@@ -95,7 +85,7 @@ object Wordle {
 
     private def evaluateCandidate(candidateWord: Word, possibleWords: PossibleWords): CandidateAssay = CandidateAssay(
       possibleWords.idsOfPossibleWords.asScala.map(_.toInt).groupUp { idOfPossibleWork =>
-        WordFeedback.feedbackFor(candidateWord, possibleWords.corpus.orderedWords(idOfPossibleWork))
+        WordFeedback.feedbackFor(candidateWord, possibleWords.corpus.orderedCommonWords(idOfPossibleWork))
       }(bigOleThing => RoaringBitmap.bitmapOf(bigOleThing.toArray: _*))
     )
   }

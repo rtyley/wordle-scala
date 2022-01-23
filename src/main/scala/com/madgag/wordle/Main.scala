@@ -13,8 +13,6 @@ import scala.util.Random
 @main def main() = {
   val corpus: Corpus = Corpus.load()
 
-
-
   val assay = Await.result(Assay.assayFor(PossibleWords.allWordsFrom(corpus)), Duration.Inf)
 
   // println(assay)
@@ -25,13 +23,20 @@ import scala.util.Random
   println("BOTTOM\n"+assay.candidateWordAssaysSortedByScore.takeRight(5))
 
   def play(assay: Assay): Unit = {
-    val targetWord: Word = Random.shuffle(assay.possibleWords.corpus.orderedWords).head
+    val popularWords: Set[Word] = assay.possibleWords.corpus.popularWords
+    val targetWord: Word = popularWords.toSeq(Random.nextInt(popularWords.size))
     println(s"Target is $targetWord")
     def takeAGuess(currentAssay: Assay, guessesRemaining: Int): Unit = {
+//      println(
+//        currentAssay.candidateWordAssaysSortedByScore.take(3)
+//          .map(p => p._1 +" "+ p._2.summariseFor(assay.possibleWords.corpus)).mkString("\n"))
       val guess: Word = currentAssay.candidateWordAssaysSortedByScore.head._1
       val evidence = Evidence.evidenceFrom(guess, targetWord)
-      println(evidence)
-      if (!evidence.isSuccess && guessesRemaining>1) takeAGuess(currentAssay.updateWith(evidence), guessesRemaining-1 )
+      val updatedAssay = currentAssay.updateWith(evidence)
+      println(s"$evidence - ${updatedAssay.possibleWords.numPossibleWords} possible words left")
+      if (!evidence.isSuccess && guessesRemaining>1) {
+        takeAGuess(updatedAssay, guessesRemaining - 1)
+      }
     }
 
     takeAGuess(assay, 6)

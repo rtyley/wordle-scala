@@ -2,7 +2,9 @@ package com.madgag.wordle
 
 import org.roaringbitmap.RoaringBitmap
 
-case class PossibleWords(corpus: Corpus, idsOfPossibleWords: RoaringBitmap)
+case class PossibleWords(corpus: Corpus, idsOfPossibleWords: RoaringBitmap) {
+  val numPossibleWords: Int = idsOfPossibleWords.getCardinality
+}
 
 object PossibleWords {
   def allWordsFrom(corpus: Corpus): PossibleWords = PossibleWords(

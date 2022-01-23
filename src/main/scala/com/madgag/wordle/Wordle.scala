@@ -19,6 +19,8 @@ object Wordle {
   // type WordFeedback = Seq[LetterFeedback]
 
   case class CandidateAssay(possibleActualWordsByFeedback: Map[WordFeedback,RoaringBitmap]) {
+    lazy val isImpossible: Boolean = possibleActualWordsByFeedback.values.forall(_.isEmpty)
+
     lazy val score: Int = possibleActualWordsByFeedback.values.map { bitMap =>
       val cardinality = bitMap.getCardinality
       cardinality * cardinality
@@ -28,22 +30,33 @@ object Wordle {
       possibleActualWordsByFeedback.view.mapValues {
         originalWordPossibleGivenFeedback
          => RoaringBitmap.and(originalWordPossibleGivenFeedback,newSuperSetOfPossibleWords)
-      }.toMap
+      }.filter(p => !p._2.isEmpty).toMap
     )
+
+    def summariseFor(corpus: Corpus): String = (for (
+        (feedback, bitmap) <-possibleActualWordsByFeedback.toSeq.sortBy(_._2.getCardinality)
+      ) yield s"${feedback.emojis}:${corpus.humanReadable(bitmap)}").mkString("  ")
 
     lazy val totalBitMapSize: Long = possibleActualWordsByFeedback.values.map(_.getSizeInBytes).sum
   }
 
   case class Assay(possibleWords: PossibleWords, possibleWordsByFeedbackByCandidateWord: Map[Word,CandidateAssay]) {
-    lazy val candidateWordAssaysSortedByScore: Seq[(Word, Int)] = possibleWordsByFeedbackByCandidateWord.toSeq.map(t => t._1 -> t._2.score).sortBy(_._2)
+    lazy val candidateWordAssaysSortedByScore: Seq[(Word, CandidateAssay)] =
+      possibleWordsByFeedbackByCandidateWord.toSeq.sortBy {
+        case (word, ca) =>
+        (ca.score, !possibleWords.idsOfPossibleWords.contains(possibleWords.corpus.orderedWords.indexOf(word)))
+      }
 
     def updateWith(evidence: Evidence): Assay = {
       val updatedPossibleWords = possibleWords.copy(
-        idsOfPossibleWords = possibleWordsByFeedbackByCandidateWord(evidence.word).possibleActualWordsByFeedback(evidence.wordFeedback)
+        idsOfPossibleWords =
+          possibleWordsByFeedbackByCandidateWord(evidence.word).possibleActualWordsByFeedback(evidence.wordFeedback)
       )
       Assay(
-        possibleWords,
-        possibleWordsByFeedbackByCandidateWord.mapV(_.updateGiven(updatedPossibleWords.idsOfPossibleWords))
+        updatedPossibleWords,
+        possibleWordsByFeedbackByCandidateWord.mapV(_.updateGiven(updatedPossibleWords.idsOfPossibleWords)).filter {
+          case (_, ca) => !ca.isImpossible
+        }
       )
     }
 

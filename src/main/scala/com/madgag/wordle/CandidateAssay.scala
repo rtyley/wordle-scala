@@ -11,6 +11,8 @@ case class CandidateAssay(possibleActualWordsByFeedback: Map[WordFeedback,Roarin
   lazy val mustBeCorrect: Boolean = possibleActualWordsByFeedback.keySet == OnlyCompleteSuccess
   lazy val canNotBeCorrectAndWouldRevealNoInformation: Boolean =
     possibleActualWordsByFeedback.size == 1 && !mustBeCorrect
+    
+  lazy val maxPossibleWordsSize: Int = possibleActualWordsByFeedback.values.map(_.getCardinality).max
 
   lazy val score: Int = possibleActualWordsByFeedback.values.map { bitMap =>
     val cardinality = bitMap.getCardinality

@@ -10,6 +10,7 @@ import scala.jdk.CollectionConverters.*
 import java.nio.file.{Files, Path, Paths}
 import scala.concurrent.Future
 import concurrent.ExecutionContext.Implicits.global
+import scala.collection.immutable.SortedMap
 
 object Wordle {
   val WordLength = 5
@@ -23,6 +24,12 @@ object Wordle {
   case class Assay(possibleWords: PossibleWords, possibleWordsByFeedbackByCandidateWord: Map[Word,CandidateAssay]) {
     val numCandidateWords: Int = possibleWordsByFeedbackByCandidateWord.size
 
+    val feedbackSpreads: SortedMap[Int, Int] =
+      SortedMap.from(possibleWordsByFeedbackByCandidateWord.values.map(_.possibleActualWordsByFeedback.size).groupUp(identity)(_.size))
+
+    val wordsGivingBestSpread: SortedMap[Int, Set[Word]] =
+      SortedMap.from(possibleWordsByFeedbackByCandidateWord.groupUp(_._2.possibleActualWordsByFeedback.size)(_.keySet))
+
     protected val allBitMaps: Seq[RoaringBitmap] =
       possibleWordsByFeedbackByCandidateWord.values.toSeq.flatMap(_.possibleActualWordsByFeedback.values)
     protected val numDifferentBitMaps = allBitMaps.toSet.size
@@ -30,6 +37,9 @@ object Wordle {
 
 
     val bitmapDiagnostic = s"${allBitMaps.size} bitmaps - distinct=$numDifferentBitMaps hashCodes=$numDifferentBitMapHashCodes"
+
+    lazy val candidateWordAssaysSortedByMaxPossibleWordSetSize: SortedMap[Int, Iterable[Word]] =
+      SortedMap.from(possibleWordsByFeedbackByCandidateWord.groupMap(_._2.maxPossibleWordsSize)(_._1))
 
     lazy val candidateWordAssaysSortedByScore: Seq[(Word, CandidateAssay)] =
       possibleWordsByFeedbackByCandidateWord.toSeq.sortBy {

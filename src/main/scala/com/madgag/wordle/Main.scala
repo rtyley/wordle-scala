@@ -21,10 +21,17 @@ import scala.util.Random
 //  println("BOTTOM\n"+assay.candidateWordAssaysSortedByScore.takeRight(5))
 
   def play(assay: Assay): Unit = {
+
     val popularWords: Set[Word] = assay.possibleWords.corpus.commonWords
     val targetWord: Word = popularWords.toSeq(Random.nextInt(popularWords.size))
+
+    println(assay.candidateWordAssaysSortedByMaxPossibleWordSetSize.take(3))
+
     println(s"Target is $targetWord")
     def takeAGuess(currentAssay: Assay, guessesTaken: Int): Unit = {
+      println(currentAssay.feedbackSpreads)
+      println(currentAssay.wordsGivingBestSpread.takeRight(5).mapV(_.toSeq.take(5)))
+
 //      println(
 //        currentAssay.candidateWordAssaysSortedByScore.take(3)
 //          .map(p => p._1 +" "+ p._2.summariseFor(assay.possibleWords.corpus)).mkString("\n"))

@@ -23,11 +23,11 @@ case class CandidateAssay(possibleActualWordsByFeedback: Map[WordFeedback,WordSe
     cardinality * cardinality
   }.sum
 
-  def updateGiven(newSubSetOfPossibleWords: BitSet): CandidateAssay = CandidateAssay(
+  def updateGiven(idForNewSubsetOfPossibleWords: WordSetId): CandidateAssay = CandidateAssay(
     possibleActualWordsByFeedback.view.mapValues {
       originalWordPossibleGivenFeedback
-      => wordSetFor(originalWordPossibleGivenFeedback) & newSubSetOfPossibleWords
-    }.filter(p => p._2.nonEmpty).mapValues(idFor).toMap
+      => PossibleWordSetStore.intersect(originalWordPossibleGivenFeedback,idForNewSubsetOfPossibleWords)
+    }.filter(p => p._2 != PossibleWordSetStore.idForEmpty).toMap
   )
 
   def summariseFor(corpus: Corpus): String = (for (

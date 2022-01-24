@@ -15,7 +15,7 @@ case class Corpus(commonWords: Set[Word], uncommonWords: Set[Word]) {
   val allWordsEvenTheUncommonOnes: Set[Word] = commonWords ++ uncommonWords
 
   val orderedCommonWords: IndexedSeq[Word] = commonWords.toIndexedSeq.sorted
-  val idsForAllCommonWords: BitSet = BitSet.fromSpecific(0 until commonWords.size) // RoaringBitmap.bitmapOfRange(0, commonWords.size)
+  val idForSetOfAllCommonWords: WordSetId = PossibleWordSetStore.idFor(BitSet.fromSpecific(0 until commonWords.size)) // RoaringBitmap.bitmapOfRange(0, commonWords.size)
 
   val hash: Int = MurmurHash3.orderedHashing.hash(allWordsEvenTheUncommonOnes.toSeq.sorted)
 
@@ -23,7 +23,7 @@ case class Corpus(commonWords: Set[Word], uncommonWords: Set[Word]) {
 
   def humanReadable(bitMap: BitSet): String = humanReadableWordsFor(bitMap).mkString(",")
 
-  def humanReadableWordsFor(bitMap: BitSet): Iterable[Word] = bitMap.map(orderedCommonWords(_))
+  def humanReadableWordsFor(bitMap: BitSet): Set[Word] = bitMap.map(orderedCommonWords(_))
 }
 
 object Corpus {

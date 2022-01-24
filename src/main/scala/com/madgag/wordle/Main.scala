@@ -21,16 +21,13 @@ import scala.util.Random
 //  println("BOTTOM\n"+assay.candidateWordAssaysSortedByScore.takeRight(5))
 
   def play(assay: Assay): Unit = {
-
     val popularWords: Set[Word] = assay.possibleWords.corpus.commonWords
     val targetWord: Word = popularWords.toSeq(Random.nextInt(popularWords.size))
 
-    println(assay.candidateWordAssaysSortedByMaxPossibleWordSetSize.take(3))
 
-    println(s"Target is $targetWord")
     def takeAGuess(currentAssay: Assay, guessesTaken: Int): Unit = {
-      println(currentAssay.feedbackSpreads)
-      println(currentAssay.wordsGivingBestSpread.takeRight(5).mapV(_.toSeq.take(5)))
+      // println(currentAssay.feedbackSpreads)
+      // println(currentAssay.wordsGivingBestSpread.takeRight(5).mapV(_.toSeq.take(5)))
 
 //      println(
 //        currentAssay.candidateWordAssaysSortedByScore.take(3)
@@ -38,6 +35,7 @@ import scala.util.Random
       println(currentAssay.bitmapDiagnostic)
       val guess: Word = currentAssay.candidateWordAssaysSortedByScore.head._1
       val evidence = Evidence.evidenceFrom(guess, targetWord)
+      // println("About to update assay...")
       val updatedAssay = currentAssay.updateWith(evidence)
       val updatedGuessesTaken = guessesTaken + 1
       val mainReport = s"$updatedGuessesTaken. $evidence"
@@ -47,11 +45,11 @@ import scala.util.Random
       } else println(s"$mainReport !!!")
     }
 
-    println(s"${assay.possibleWords.numPossibleWords} possible words, ${assay.numCandidateWords} candidates")
+    println(s"Target is '$targetWord', ${assay.possibleWords.numPossibleWords} possible words, ${assay.numCandidateWords} candidates")
     takeAGuess(assay, 0)
   }
 
-  for (_ <- 1 to 10) {
+  for (_ <- 1 to 20) {
     play(assay)
   }
 

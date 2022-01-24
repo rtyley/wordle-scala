@@ -4,7 +4,7 @@ import com.madgag.scala.collection.decorators.*
 import com.madgag.wordle.LetterFeedback.*
 import com.madgag.wordle.WordFeedback.CompleteSuccess
 import com.madgag.wordle.CandidateAssay.OnlyCompleteSuccess
-import com.madgag.wordle.PossibleWordSetStore.idFor
+import com.madgag.wordle.PossibleWordSetStore.{idFor, wordSetFor}
 import org.roaringbitmap.RoaringBitmap
 
 import scala.jdk.CollectionConverters.*
@@ -31,14 +31,13 @@ object Wordle {
     val wordsGivingBestSpread: SortedMap[Int, Set[Word]] =
       SortedMap.from(possibleWordsByFeedbackByCandidateWord.groupUp(_._2.possibleActualWordsByFeedback.size)(_.keySet))
 
-    protected val allBitMaps: Seq[BitSet] =
-      possibleWordsByFeedbackByCandidateWord.values.toSeq.flatMap(_.possibleActualWordsByFeedback.values.map(PossibleWordSetStore.wordSetFor))
-    private val uniqueBitMaps: Set[BitSet] = allBitMaps.toSet
-    protected val numDifferentBitMaps = uniqueBitMaps.size
-    protected val numDifferentBitMapHashCodes = allBitMaps.map(_.hashCode).toSet.size
+    protected val allBitMaps: Seq[WordSetId] =
+      possibleWordsByFeedbackByCandidateWord.values.toSeq.flatMap(_.possibleActualWordsByFeedback.values)
+    private val uniqueBitMaps: Set[WordSetId] = allBitMaps.toSet
+    protected val numDifferentBitMaps: Int = uniqueBitMaps.size
 
-    val possibleWordSetsCardinality: SortedMap[Int, String] =
-      SortedMap.from(uniqueBitMaps.groupUp(_.size) {
+    lazy val possibleWordSetsCardinality: SortedMap[Int, String] =
+      SortedMap.from(uniqueBitMaps.groupUp(wsId => wordSetFor(wsId).size) {
         bitMaps =>
 //          val avgBytes: Float = bitMaps.map(_.getSizeInBytes).sum.toFloat / bitMaps.size
 //          val avgBytesPerEntry = avgBytes / bitMaps.head.getCardinality
@@ -47,7 +46,7 @@ object Wordle {
       })
 
     val bitmapDiagnostic =
-      s"${allBitMaps.size} bitmaps - distinct=$numDifferentBitMaps hashCodes=$numDifferentBitMapHashCodes possibleWordSetsCardinality=${possibleWordSetsCardinality.mkString(",")}"
+      s"${allBitMaps.size} wordsets - distinct=$numDifferentBitMaps"
 
     lazy val candidateWordAssaysSortedByMaxPossibleWordSetSize: SortedMap[Int, Iterable[Word]] =
       SortedMap.from(possibleWordsByFeedbackByCandidateWord.groupMap(_._2.maxPossibleWordsSize)(_._1))
@@ -55,20 +54,22 @@ object Wordle {
     lazy val candidateWordAssaysSortedByScore: Seq[(Word, CandidateAssay)] =
       possibleWordsByFeedbackByCandidateWord.toSeq.sortBy {
         case (word, ca) =>
-        (ca.score, !possibleWords.idsOfPossibleWords.contains(possibleWords.corpus.orderedCommonWords.indexOf(word)))
+        (ca.score, !possibleWords.possibleWords.contains(word))
       }
 
     def updateWith(evidence: Evidence): Assay = {
       val updatedPossibleWords = possibleWords.copy(
-        idsOfPossibleWords =
+        wordSetId =
           possibleWordsByFeedbackByCandidateWord(evidence.word).possibleActualWordsByFeedback(evidence.wordFeedback)
       )
-      Assay(
+      val assay = Assay(
         updatedPossibleWords,
-        possibleWordsByFeedbackByCandidateWord.mapV(_.updateGiven(updatedPossibleWords.idsOfPossibleWords)).filter {
+        possibleWordsByFeedbackByCandidateWord.mapV(_.updateGiven(updatedPossibleWords.wordSetId)).filter {
           case (_, ca) => !ca.canNotBeCorrectAndWouldRevealNoInformation
         }
       )
+      // println("Update complete")
+      assay
     }
 
     def store(): Unit = {

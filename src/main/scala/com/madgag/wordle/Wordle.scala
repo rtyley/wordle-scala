@@ -10,7 +10,7 @@ import scala.jdk.CollectionConverters.*
 import java.nio.file.{Files, Path, Paths}
 import scala.concurrent.Future
 import concurrent.ExecutionContext.Implicits.global
-import scala.collection.immutable.SortedMap
+import scala.collection.immutable.{BitSet, SortedMap}
 
 object Wordle {
   val WordLength = 5
@@ -30,17 +30,17 @@ object Wordle {
     val wordsGivingBestSpread: SortedMap[Int, Set[Word]] =
       SortedMap.from(possibleWordsByFeedbackByCandidateWord.groupUp(_._2.possibleActualWordsByFeedback.size)(_.keySet))
 
-    protected val allBitMaps: Seq[RoaringBitmap] =
+    protected val allBitMaps: Seq[BitSet] =
       possibleWordsByFeedbackByCandidateWord.values.toSeq.flatMap(_.possibleActualWordsByFeedback.values)
-    private val uniqueBitMaps: Set[RoaringBitmap] = allBitMaps.toSet
+    private val uniqueBitMaps: Set[BitSet] = allBitMaps.toSet
     protected val numDifferentBitMaps = uniqueBitMaps.size
     protected val numDifferentBitMapHashCodes = allBitMaps.map(_.hashCode).toSet.size
 
     val possibleWordSetsCardinality: SortedMap[Int, String] =
-      SortedMap.from(uniqueBitMaps.groupUp(_.getCardinality) {
+      SortedMap.from(uniqueBitMaps.groupUp(_.size) {
         bitMaps =>
-          val avgBytes: Float = bitMaps.map(_.getSizeInBytes).sum.toFloat / bitMaps.size
-          val avgBytesPerEntry = avgBytes / bitMaps.head.getCardinality
+//          val avgBytes: Float = bitMaps.map(_.getSizeInBytes).sum.toFloat / bitMaps.size
+//          val avgBytesPerEntry = avgBytes / bitMaps.head.getCardinality
           // f"${bitMaps.size} $avgBytes%2.1f $avgBytesPerEntry%2.1f per"
           bitMaps.size.toString
       })
@@ -70,11 +70,7 @@ object Wordle {
       )
     }
 
-    lazy val totalBitMapSize: Long = possibleWordsByFeedbackByCandidateWord.values.map(_.totalBitMapSize).sum
-
     def store(): Unit = {
-      println(s"Storing... total bitmap size is $totalBitMapSize")
-
       println("Stored")
     }
 
@@ -104,9 +100,9 @@ object Wordle {
     }
 
     private def evaluateCandidate(candidateWord: Word, possibleWords: PossibleWords): CandidateAssay = CandidateAssay(
-      possibleWords.idsOfPossibleWords.asScala.map(_.toInt).groupUp { idOfPossibleWork =>
-        WordFeedback.feedbackFor(candidateWord, possibleWords.corpus.orderedCommonWords(idOfPossibleWork))
-      }(bigOleThing => RoaringBitmap.bitmapOf(bigOleThing.toArray: _*))
+      possibleWords.idsOfPossibleWords.groupBy { idOfPossibleWord =>
+        WordFeedback.feedbackFor(candidateWord, possibleWords.corpus.orderedCommonWords(idOfPossibleWord))
+      }.mapV(BitSet.fromSpecific)
     )
   }
 

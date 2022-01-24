@@ -32,11 +32,21 @@ object Wordle {
 
     protected val allBitMaps: Seq[RoaringBitmap] =
       possibleWordsByFeedbackByCandidateWord.values.toSeq.flatMap(_.possibleActualWordsByFeedback.values)
-    protected val numDifferentBitMaps = allBitMaps.toSet.size
+    private val uniqueBitMaps: Set[RoaringBitmap] = allBitMaps.toSet
+    protected val numDifferentBitMaps = uniqueBitMaps.size
     protected val numDifferentBitMapHashCodes = allBitMaps.map(_.hashCode).toSet.size
 
+    val possibleWordSetsCardinality: SortedMap[Int, String] =
+      SortedMap.from(uniqueBitMaps.groupUp(_.getCardinality) {
+        bitMaps =>
+          val avgBytes: Float = bitMaps.map(_.getSizeInBytes).sum.toFloat / bitMaps.size
+          val avgBytesPerEntry = avgBytes / bitMaps.head.getCardinality
+          // f"${bitMaps.size} $avgBytes%2.1f $avgBytesPerEntry%2.1f per"
+          bitMaps.size.toString
+      })
 
-    val bitmapDiagnostic = s"${allBitMaps.size} bitmaps - distinct=$numDifferentBitMaps hashCodes=$numDifferentBitMapHashCodes"
+    val bitmapDiagnostic =
+      s"${allBitMaps.size} bitmaps - distinct=$numDifferentBitMaps hashCodes=$numDifferentBitMapHashCodes possibleWordSetsCardinality=${possibleWordSetsCardinality.mkString(",")}"
 
     lazy val candidateWordAssaysSortedByMaxPossibleWordSetSize: SortedMap[Int, Iterable[Word]] =
       SortedMap.from(possibleWordsByFeedbackByCandidateWord.groupMap(_._2.maxPossibleWordsSize)(_._1))

@@ -51,7 +51,7 @@ import scala.util.Random
     takeAGuess(assay, 0)
   }
 
-  for (_ <- 1 to 5) {
+  for (_ <- 1 to 10) {
     play(assay)
   }
 

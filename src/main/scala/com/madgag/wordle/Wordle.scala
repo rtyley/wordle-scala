@@ -4,6 +4,7 @@ import com.madgag.scala.collection.decorators.*
 import com.madgag.wordle.LetterFeedback.*
 import com.madgag.wordle.WordFeedback.CompleteSuccess
 import com.madgag.wordle.CandidateAssay.OnlyCompleteSuccess
+import com.madgag.wordle.PossibleWordSetStore.idFor
 import org.roaringbitmap.RoaringBitmap
 
 import scala.jdk.CollectionConverters.*
@@ -31,7 +32,7 @@ object Wordle {
       SortedMap.from(possibleWordsByFeedbackByCandidateWord.groupUp(_._2.possibleActualWordsByFeedback.size)(_.keySet))
 
     protected val allBitMaps: Seq[BitSet] =
-      possibleWordsByFeedbackByCandidateWord.values.toSeq.flatMap(_.possibleActualWordsByFeedback.values)
+      possibleWordsByFeedbackByCandidateWord.values.toSeq.flatMap(_.possibleActualWordsByFeedback.values.map(PossibleWordSetStore.wordSetFor))
     private val uniqueBitMaps: Set[BitSet] = allBitMaps.toSet
     protected val numDifferentBitMaps = uniqueBitMaps.size
     protected val numDifferentBitMapHashCodes = allBitMaps.map(_.hashCode).toSet.size
@@ -102,7 +103,7 @@ object Wordle {
     private def evaluateCandidate(candidateWord: Word, possibleWords: PossibleWords): CandidateAssay = CandidateAssay(
       possibleWords.idsOfPossibleWords.groupBy { idOfPossibleWord =>
         WordFeedback.feedbackFor(candidateWord, possibleWords.corpus.orderedCommonWords(idOfPossibleWord))
-      }.mapV(BitSet.fromSpecific)
+      }.mapV(naiveSet => idFor(BitSet.fromSpecific(naiveSet)))
     )
   }
 

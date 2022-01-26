@@ -9,28 +9,41 @@ import scala.collection.immutable.BitSet
 
 class WordSetId(val value: Int) extends AnyVal
 
+case class WordSet(id: Int, bitSet: BitSet) {
+//  def intersect(other: WordSet): WordSet = {
+//
+//  }
+}
+
 object PossibleWordSetStore {
 
   private val idGen: AtomicInteger = new AtomicInteger()
 
-  private val setById: BiMap[WordSetId, BitSet] =
-    Maps.synchronizedBiMap(HashBiMap.create[WordSetId, BitSet]())
-
-  def idFor(possibleWords: BitSet): WordSetId =
-    setById.inverse().computeIfAbsent(possibleWords, _ => new WordSetId(idGen.incrementAndGet()))
-
-  def wordSetFor(pwsId: WordSetId): BitSet = setById.get(pwsId)
+//  private val setById: BiMap[WordSetId, BitSet] =
+//    Maps.synchronizedBiMap(HashBiMap.create[WordSetId, BitSet]())
+//
+//  def idFor(possibleWords: BitSet): WordSetId =
+//    setById.inverse().computeIfAbsent(possibleWords, _ => new WordSetId(idGen.incrementAndGet()))
+//
+//  def wordSetFor(pwsId: WordSetId): BitSet = setById.get(pwsId)
 
   def numStoredSets: Int = idGen.get()
 
-  val idForEmpty: WordSetId = idFor(BitSet.empty)
+  val internMap: TrieMap[Set[Int], WordSet] = TrieMap.empty
 
-  private val intersectionByOperands: TrieMap[(WordSetId,WordSetId), WordSetId] = scala.collection.concurrent.TrieMap.empty
+  def intern(words: Set[Int]): WordSet = internMap.getOrElseUpdate(words, createOptimisedVersionOf(words))
 
-  def intersect(a: WordSetId, b: WordSetId): WordSetId = {
-    idFor(wordSetFor(a) & wordSetFor(b))
-//    val key = if (a.value < b.value) (a, b) else (b, a)
-//    intersectionByOperands.getOrElseUpdate(key, idFor(wordSetFor(a) & wordSetFor(b)))
+  private def createOptimisedVersionOf(wordSet: Set[Int]): WordSet =
+    WordSet(idGen.incrementAndGet(), BitSet.fromSpecific(wordSet)) // later we may even construct optimised storage types
+
+
+  val emptySet: WordSet = intern(Set.empty)
+
+  private val intersectionByOperands: TrieMap[Long, WordSet] = scala.collection.concurrent.TrieMap.empty
+
+  def intersect(a: WordSet, b: WordSet): WordSet = {
+    val intersectionId = if (a.id > b.id) (a.id << 32) + b.id else (b.id << 32) + a.id
+    intersectionByOperands.getOrElseUpdate(intersectionId, intern(a.bitSet & b.bitSet))
   }
 }
 

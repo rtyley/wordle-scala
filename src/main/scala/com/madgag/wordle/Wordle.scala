@@ -1,17 +1,15 @@
 package com.madgag.wordle
 
 import com.madgag.scala.collection.decorators.*
+import com.madgag.wordle.CandidateAssay.OnlyCompleteSuccess
 import com.madgag.wordle.LetterFeedback.*
 import com.madgag.wordle.WordFeedback.CompleteSuccess
-import com.madgag.wordle.CandidateAssay.OnlyCompleteSuccess
-import com.madgag.wordle.PossibleWordSetStore.{idFor, wordSetFor}
-import org.roaringbitmap.RoaringBitmap
 
-import scala.jdk.CollectionConverters.*
 import java.nio.file.{Files, Path, Paths}
-import scala.concurrent.Future
-import concurrent.ExecutionContext.Implicits.global
 import scala.collection.immutable.{BitSet, SortedMap}
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+import scala.jdk.CollectionConverters.*
 
 object Wordle {
   val WordLength = 5
@@ -31,19 +29,10 @@ object Wordle {
     val wordsGivingBestSpread: SortedMap[Int, Set[Word]] =
       SortedMap.from(possibleWordsByFeedbackByCandidateWord.groupUp(_._2.possibleActualWordsByFeedback.size)(_.keySet))
 
-    protected val allBitMaps: Seq[WordSetId] =
+    protected val allBitMaps: Seq[WordSet] =
       possibleWordsByFeedbackByCandidateWord.values.toSeq.flatMap(_.possibleActualWordsByFeedback.values)
-    private val uniqueBitMaps: Set[WordSetId] = allBitMaps.toSet
+    private val uniqueBitMaps: Set[WordSet] = allBitMaps.toSet
     protected val numDifferentBitMaps: Int = uniqueBitMaps.size
-
-    lazy val possibleWordSetsCardinality: SortedMap[Int, String] =
-      SortedMap.from(uniqueBitMaps.groupUp(wsId => wordSetFor(wsId).size) {
-        bitMaps =>
-//          val avgBytes: Float = bitMaps.map(_.getSizeInBytes).sum.toFloat / bitMaps.size
-//          val avgBytesPerEntry = avgBytes / bitMaps.head.getCardinality
-          // f"${bitMaps.size} $avgBytes%2.1f $avgBytesPerEntry%2.1f per"
-          bitMaps.size.toString
-      })
 
     val bitmapDiagnostic =
       s"${allBitMaps.size} wordsets - distinct=$numDifferentBitMaps"
@@ -59,12 +48,12 @@ object Wordle {
 
     def updateWith(evidence: Evidence): Assay = {
       val updatedPossibleWords = possibleWords.copy(
-        wordSetId =
+        wordSet =
           possibleWordsByFeedbackByCandidateWord(evidence.word).possibleActualWordsByFeedback(evidence.wordFeedback)
       )
       val assay = Assay(
         updatedPossibleWords,
-        possibleWordsByFeedbackByCandidateWord.mapV(_.updateGiven(updatedPossibleWords.wordSetId)).filter {
+        possibleWordsByFeedbackByCandidateWord.mapV(_.updateGiven(updatedPossibleWords.wordSet)).filter {
           case (_, ca) => !ca.canNotBeCorrectAndWouldRevealNoInformation
         }
       )
@@ -102,9 +91,9 @@ object Wordle {
     }
 
     private def evaluateCandidate(candidateWord: Word, possibleWords: PossibleWords): CandidateAssay = CandidateAssay(
-      possibleWords.idsOfPossibleWords.groupBy { idOfPossibleWord =>
+      possibleWords.wordSet.bitSet.groupBy { idOfPossibleWord =>
         WordFeedback.feedbackFor(candidateWord, possibleWords.corpus.orderedCommonWords(idOfPossibleWord))
-      }.mapV(naiveSet => idFor(BitSet.fromSpecific(naiveSet)))
+      }.mapV(PossibleWordSetStore.intern)
     )
   }
 

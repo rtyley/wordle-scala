@@ -2,7 +2,6 @@ package com.madgag.wordle
 
 import com.google.common.io.{CharStreams, Resources}
 import com.madgag.wordle.Wordle.Word
-import org.roaringbitmap.RoaringBitmap
 
 import java.nio.charset.StandardCharsets.UTF_8
 import scala.jdk.CollectionConverters.*
@@ -15,7 +14,7 @@ case class Corpus(commonWords: Set[Word], uncommonWords: Set[Word]) {
   val allWordsEvenTheUncommonOnes: Set[Word] = commonWords ++ uncommonWords
 
   val orderedCommonWords: IndexedSeq[Word] = commonWords.toIndexedSeq.sorted
-  val idForSetOfAllCommonWords: WordSetId = PossibleWordSetStore.idFor(BitSet.fromSpecific(0 until commonWords.size)) // RoaringBitmap.bitmapOfRange(0, commonWords.size)
+  val idForSetOfAllCommonWords: WordSet = PossibleWordSetStore.intern((0 until commonWords.size).toSet)
 
   val hash: Int = MurmurHash3.orderedHashing.hash(allWordsEvenTheUncommonOnes.toSeq.sorted)
 

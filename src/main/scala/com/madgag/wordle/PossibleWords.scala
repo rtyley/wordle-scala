@@ -1,13 +1,10 @@
 package com.madgag.wordle
 
-import com.madgag.wordle.PossibleWordSetStore.wordSetFor
-import org.roaringbitmap.RoaringBitmap
-
 import scala.collection.immutable.BitSet
 
-case class PossibleWords(corpus: Corpus, wordSetId: WordSetId) {
+case class PossibleWords(corpus: Corpus, wordSet: WordSet) {
 
-  lazy val idsOfPossibleWords: BitSet = wordSetFor(wordSetId)
+  lazy private val idsOfPossibleWords: BitSet = wordSet.bitSet
   lazy val numPossibleWords: Int = idsOfPossibleWords.size
 
   lazy val possibleWords: Set[String] = corpus.humanReadableWordsFor(idsOfPossibleWords)

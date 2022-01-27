@@ -15,7 +15,7 @@ import scala.util.Random
 
   val assay = Await.result(Assay.assayFor(PossibleWords.allWordsFrom(corpus)), Duration.Inf)
 
-  println(assay.possibleWordsByFeedbackByCandidateWord.size)
+  println(assay.candidateAssayByWord.size)
 //  println("TOP\n"+assay.candidateWordAssaysSortedByScore.take(5))
 //
 //  println("BOTTOM\n"+assay.candidateWordAssaysSortedByScore.takeRight(5))
@@ -36,7 +36,7 @@ import scala.util.Random
       val guess: Word = currentAssay.candidateWordAssaysSortedByScore.head._1
       val evidence = Evidence.evidenceFrom(guess, targetWord)
       // println("About to update assay...")
-      val updatedAssay = currentAssay.updateWith(evidence)
+      val updatedAssay = currentAssay.updatedWith(evidence)
       val updatedGuessesTaken = guessesTaken + 1
       val mainReport = s"$updatedGuessesTaken. $evidence"
       if (!evidence.isSuccess && guessesTaken < 6) {

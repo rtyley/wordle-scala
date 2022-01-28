@@ -26,5 +26,4 @@ class CandidateAssayTest extends AsyncFlatSpec with Matchers {
       updatedAssay.candidateAssayByWord("STORE").possibleWordsByFeedback.size shouldBe 2
     }
   }
-
 }

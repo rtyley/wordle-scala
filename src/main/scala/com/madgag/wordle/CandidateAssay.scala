@@ -27,10 +27,6 @@ case class CandidateAssay(possibleWordsByFeedback: Map[WordFeedback, WordSet]) {
       => PossibleWordSetStore.intersect(originalWordPossibleGivenFeedback, idForNewSubsetOfPossibleWords)
     }.filter(p => p._2 != PossibleWordSetStore.emptySet).toMap
   )
-
-  def summariseFor(corpus: Corpus): String = (for (
-    (feedback, wordSet) <- possibleWordsByFeedback.toSeq.sortBy(p => p._2.bitSet.size)
-  ) yield s"${feedback.emojis}:${corpus.humanReadable(wordSet.bitSet)}").mkString("  ")
 }
 
 object CandidateAssay {

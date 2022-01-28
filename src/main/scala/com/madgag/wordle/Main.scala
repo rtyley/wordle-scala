@@ -13,9 +13,10 @@ import scala.util.Random
 @main def main() = {
   val corpus: Corpus = Corpus.load()
 
-  val assay = Await.result(Assay.assayFor(PossibleWords.allWordsFrom(corpus)), Duration.Inf)
+  println(corpus.grid)
 
-  println(assay.candidateAssayByWord.size)
+  val assay = ??? // Await.result(Assay.assayFor(PossibleWords.allWordsFrom(corpus)), Duration.Inf)
+
 //  println("TOP\n"+assay.candidateWordAssaysSortedByScore.take(5))
 //
 //  println("BOTTOM\n"+assay.candidateWordAssaysSortedByScore.takeRight(5))

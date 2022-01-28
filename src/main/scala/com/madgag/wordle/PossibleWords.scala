@@ -7,7 +7,7 @@ case class PossibleWords(corpus: Corpus, wordSet: WordSet) {
   lazy private val idsOfPossibleWords: BitSet = wordSet.bitSet
   lazy val numPossibleWords: Int = idsOfPossibleWords.size
 
-  lazy val possibleWords: Set[String] = corpus.humanReadableWordsFor(idsOfPossibleWords)
+  lazy val possibleWords: Set[String] = ??? // corpus.humanReadableWordsFor(idsOfPossibleWords)
 }
 
 object PossibleWords {

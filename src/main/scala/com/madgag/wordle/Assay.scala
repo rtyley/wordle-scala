@@ -56,20 +56,21 @@ case class Assay(possibleWords: PossibleWords, candidateAssayByWord: Map[Word,Ca
 
 object Assay {
   def assayFor(possibleWords: PossibleWords): Future[Assay] = {
-    for {
-      possibleWordsWithFeedbackByCandidateWord <- Future.traverse(possibleWords.corpus.allWordsEvenTheUncommonOnes) { candidateWord =>
-        Future(candidateWord -> evaluateCandidate(candidateWord, possibleWords))
-      }
-    } yield {
-      val assay = Assay(possibleWords, possibleWordsWithFeedbackByCandidateWord.toMap)
-      assay.store()
-      assay
-    }
+//    for {
+//      possibleWordsWithFeedbackByCandidateWord <- Future.traverse(possibleWords.corpus.allWordsEvenTheUncommonOnes) { candidateWord =>
+//        Future(candidateWord -> evaluateCandidate(candidateWord, possibleWords))
+//      }
+//    } yield {
+//      val assay = Assay(possibleWords, possibleWordsWithFeedbackByCandidateWord.toMap)
+//      assay.store()
+//      assay
+//    }
+    ???
   }
 
-  private def evaluateCandidate(candidateWord: Word, possibleWords: PossibleWords): CandidateAssay = CandidateAssay(
-    possibleWords.wordSet.bitSet.groupBy { idOfPossibleWord =>
-      WordFeedback.feedbackFor(candidateWord, possibleWords.corpus.orderedCommonWords(idOfPossibleWord))
-    }.mapV(PossibleWordSetStore.intern)
-  )
+//  private def evaluateCandidate(candidateWord: Word, possibleWords: PossibleWords): CandidateAssay = CandidateAssay(
+//    possibleWords.wordSet.bitSet.groupBy { idOfPossibleWord =>
+//      WordFeedback.feedbackFor(candidateWord, possibleWords.corpus.orderedCommonWords(idOfPossibleWord))
+//    }.mapV(PossibleWordSetStore.intern)
+//  )
 }

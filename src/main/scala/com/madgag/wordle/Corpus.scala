@@ -12,8 +12,11 @@ import java.nio.charset.{Charset, StandardCharsets}
 import java.nio.file.{Files, Path}
 import java.util.zip.{GZIPInputStream, GZIPOutputStream}
 import scala.collection.immutable.{ArraySeq, BitSet, SortedSet}
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, Future}
 import scala.util.Using
 import scala.util.hashing.MurmurHash3
+import concurrent.ExecutionContext.Implicits.global
 
 case class Corpus(commonWords: SortedSet[Word], uncommonWords: SortedSet[Word]) {
   val commonWordsOrdered: IndexedSeq[Word] = commonWords.toIndexedSeq.sorted
@@ -28,27 +31,45 @@ case class Corpus(commonWords: SortedSet[Word], uncommonWords: SortedSet[Word]) 
   // def humanReadableWordsFor(bitMap: BitSet): Set[Word] = bitMap.map(orderedCommonWords(_))
 
   val initialCandidates: Candidates = Candidates(
-    possibleWords = SortedSet.from(0 until commonWords.size),
-    discriminators = SortedSet.from(commonWords.size until allWordsOrdered.size)
+    possibleWords = BitSet.fromSpecific(0 until commonWords.size),
+    discriminators = BitSet.fromSpecific(commonWords.size until allWordsOrdered.size)
   )
 
-  def updateCandidatesWithEvidence(candidates: Candidates, evidenceWordId: Int, evidenceFeedback: WordFeedback): Candidates = {
-    val gridEntryForEvidenceWord = grid(evidenceWordId)
-    val (possibleWordsThatRemainPossible, possibleWordsThatBecameImpossible) =
-      candidates.possibleWords.partition(gridEntryForEvidenceWord(_) == evidenceFeedback.underlying)
+  def updateCandidatesWithNewPossibleWordSet(candidates: Candidates, updatedPossibleWords: SortedSet[Int]): Candidates = {
+    updateCandidatesWith(candidates, updatedPossibleWords, candidates.possibleWords -- updatedPossibleWords)
+  }
 
+  def updateCandidatesWithEvidence(candidates: Candidates, evidenceWordId: Int, evidenceFeedback: WordFeedback): Candidates = {
+    val (possibleWordsThatRemainPossible, possibleWordsThatBecameImpossible) = {
+      val gridEntryForEvidenceWord = grid(evidenceWordId)
+      candidates.possibleWords.partition(gridEntryForEvidenceWord(_) == evidenceFeedback.underlying)
+    }
+
+    updateCandidatesWith(candidates, possibleWordsThatRemainPossible, possibleWordsThatBecameImpossible)
+  }
+
+  private def updateCandidatesWith(candidates: Candidates, possibleWordsThatRemainPossible: SortedSet[Int], possibleWordsThatBecameImpossible: SortedSet[Int]) = {
     // if the `Candidates` for possibleWordsThatRemainPossible is already available, return it, skip next part
 
     val updatedDiscriminators: SortedSet[Int] = (candidates.discriminators ++ possibleWordsThatBecameImpossible).filter { wordId =>
-        val gridEntryForWord = grid(wordId)
-        val firstFeedback = gridEntryForWord(possibleWordsThatRemainPossible.head)
-        possibleWordsThatRemainPossible.tail.exists(gridEntryForWord(_) != firstFeedback)
-      }
+      val gridEntryForWord = grid(wordId)
+      val firstFeedback = gridEntryForWord(possibleWordsThatRemainPossible.head)
+      possibleWordsThatRemainPossible.view.tail.exists(gridEntryForWord(_) != firstFeedback)
+    }
 
     Candidates(
       possibleWords = possibleWordsThatRemainPossible,
       discriminators = updatedDiscriminators
     )
+  }
+
+  def possibleWordSetsOnCandidate(candidates: Candidates, candidateWordId: Int): Set[SortedSet[Int]] = {
+    val gridEntryForWord = grid(candidateWordId)
+    candidates.possibleWords.groupBy(gridEntryForWord).values.toSet
+  }
+
+  def possibleWordSetsForCandidates(candidates: Candidates): Set[Set[SortedSet[Int]]] = {
+    candidates.allWords.toSet.map(wordId => possibleWordSetsOnCandidate(candidates, wordId))
   }
 
 
@@ -76,6 +97,24 @@ case class Corpus(commonWords: SortedSet[Word], uncommonWords: SortedSet[Word]) 
       gd
     }
   }
+
+  def analyseGrid() = {
+    val allPossibleSplitsForCandidates: Set[Set[SortedSet[Int]]] = possibleWordSetsForCandidates(initialCandidates)
+    println(allPossibleSplitsForCandidates.size)
+
+    val uniquePWSsAfterFirstMove = allPossibleSplitsForCandidates.flatten
+
+    println(s"num unique PWSets after initial move : ${uniquePWSsAfterFirstMove.size}")
+    val possibleCandidatesAfter1stMove: Set[Candidates] = Await.result(Future.traverse(uniquePWSsAfterFirstMove) { possWordset =>
+      Future(updateCandidatesWithNewPossibleWordSet(initialCandidates, possWordset))
+    }, Duration.Inf)
+    println(s"...candidates recomputed")
+    val allPossibleSplitsForCandidatesAfter1stMove = possibleCandidatesAfter1stMove.flatMap(possibleWordSetsForCandidates)
+    println(s"allPossibleSplitsForCandidatesAfter1stMove=${allPossibleSplitsForCandidatesAfter1stMove.size}")
+    val uniquePWSsAfter2ndMove = allPossibleSplitsForCandidatesAfter1stMove.flatten
+    println(s"uniquePWSsAfter2ndMove=${uniquePWSsAfter2ndMove.size}")
+  }
+
 }
 
 object Corpus {

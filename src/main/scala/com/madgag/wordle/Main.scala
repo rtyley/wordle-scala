@@ -15,6 +15,8 @@ import scala.util.Random
 
   println(corpus.grid)
 
+  corpus.analyseGrid()
+
   val assay = ??? // Await.result(Assay.assayFor(PossibleWords.allWordsFrom(corpus)), Duration.Inf)
 
 //  println("TOP\n"+assay.candidateWordAssaysSortedByScore.take(5))

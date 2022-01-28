@@ -8,22 +8,35 @@ import com.madgag.wordle.LetterFeedback.*
 import com.madgag.wordle.WordFeedback.feedbackFor
 
 class WordFeedbackTest extends AnyWordSpec with Matchers {
-  "Goosg" should {
+  "WordFeedback" should {
+    "recognise success" in {
+      WordFeedback.CompleteSuccess.emojis shouldBe "🟩🟩🟩🟩🟩"
+
+      WordFeedback(Correct, Misplaced, Incorrect, Incorrect, Incorrect).emojis shouldBe "🟩🟨⬜⬜⬜"
+      WordFeedback(Correct, Correct, Correct, Correct, Incorrect).emojis shouldBe "🟩🟩🟩🟩⬜"
+      WordFeedback("⬜🟨⬜🟩⬜").emojis shouldBe "⬜🟨⬜🟩⬜"
+      WordFeedback("🟩⬜⬜⬜🟨").emojis shouldBe "🟩⬜⬜⬜🟨"
+    }
+
     "roundtrip" in {
-      val justGreenAtStart = Seq(Green, Grey, Grey, Grey, Grey)
+      val justGreenAtStart = Seq(Correct, Incorrect, Incorrect, Incorrect, Incorrect)
       WordFeedback(justGreenAtStart).toSeq shouldBe justGreenAtStart
 
-      val justTwoYellowAtStart = Seq(Yellow, Yellow, Grey, Grey, Grey)
+      val justTwoYellowAtStart = Seq(Misplaced, Misplaced, Incorrect, Incorrect, Incorrect)
       WordFeedback(justTwoYellowAtStart).toSeq shouldBe justTwoYellowAtStart
     }
 
-    "give good feedback on a word" in {
-      feedbackFor("BREAD", "DAILY").emojis shouldBe "⬜⬜⬜🟨🟨"
-
-      println(feedbackFor("BAEEB", "ABTEY").emojis)
-      println(evidenceFrom("CHORE", "CHICK").ansiColouredString)
-      println(evidenceFrom("CHOCK", "CHICK").ansiColouredString)
-      println(evidenceFrom("duggs", "goats").ansiColouredString)
+    "give good feedback on target word 'PERKY'" in {
+      for ((candidateWord, expectedFeedback) <- Seq(
+        "RAISE" -> "🟨⬜⬜⬜🟨",
+        "PRANK" -> "🟩🟨⬜⬜🟨",
+        "FRANK" -> "⬜🟨⬜⬜🟨",
+        "DAILY" -> "⬜⬜⬜⬜🟩",
+        "WORTH" -> "⬜⬜🟩⬜⬜",
+        "SHIFT" -> "⬜⬜⬜⬜⬜"
+      )) {
+        feedbackFor(candidateWord, "PERKY").emojis shouldBe expectedFeedback
+      }
     }
   }
 }

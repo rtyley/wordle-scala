@@ -23,7 +23,7 @@ class CandidateAssayTest extends AsyncFlatSpec with Matchers {
     assayFor(allWordsFrom(corpus)).map { initialAssay =>
       val updatedAssay = initialAssay.updatedWith(evidenceFrom("STORM", "STORE"))
 
-      updatedAssay.candidateAssayByWord("STORE") shouldBe OnlyCompleteSuccess
+      updatedAssay.candidateAssayByWord("STORE").possibleWordsByFeedback.size shouldBe 2
     }
   }
 

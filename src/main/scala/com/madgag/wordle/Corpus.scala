@@ -7,22 +7,20 @@ import java.nio.charset.StandardCharsets.UTF_8
 import scala.jdk.CollectionConverters.*
 import java.nio.charset.{Charset, StandardCharsets}
 import java.nio.file.Path
-import scala.collection.immutable.{ArraySeq, BitSet}
+import scala.collection.immutable.{ArraySeq, BitSet, SortedSet}
 import scala.util.hashing.MurmurHash3
 
-case class Corpus(commonWords: Set[Word], uncommonWords: Set[Word]) {
-  val allWordsEvenTheUncommonOnes: Set[Word] = commonWords ++ uncommonWords
+case class Corpus(commonWords: SortedSet[Word], uncommonWords: SortedSet[Word]) {
+  val commonWordsOrdered: IndexedSeq[Word] = commonWords.toIndexedSeq.sorted
+  val allWordsOrdered: IndexedSeq[Word]  = commonWordsOrdered ++ uncommonWords.toIndexedSeq
 
-  val orderedCommonWords: IndexedSeq[Word] = commonWords.toIndexedSeq.sorted
   val idForSetOfAllCommonWords: WordSet = PossibleWordSetStore.intern((0 until commonWords.size).toSet)
 
-  val hash: Int = MurmurHash3.orderedHashing.hash(allWordsEvenTheUncommonOnes.toSeq.sorted)
+  val hash: Int = MurmurHash3.orderedHashing.hash(allWordsOrdered)
 
-  val assayStoragePath: Path = Path.of("/tmp", s"$hash.json")
+  val assayStoragePath: Path = Path.of("/tmp", "wordle-scala-cache", s"$hash.json")
 
-  def humanReadable(bitMap: BitSet): String = humanReadableWordsFor(bitMap).mkString(",")
-
-  def humanReadableWordsFor(bitMap: BitSet): Set[Word] = bitMap.map(orderedCommonWords(_))
+  // def humanReadableWordsFor(bitMap: BitSet): Set[Word] = bitMap.map(orderedCommonWords(_))
 }
 
 object Corpus {

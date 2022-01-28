@@ -1,5 +1,7 @@
 package com.madgag.wordle.approaches.tartan
 
-class MegaGrid() {
+import com.madgag.wordle.WordFeedback
+
+class MegaGrid(grid: Array[Array[WordFeedback]]) {
 
 }

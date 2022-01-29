@@ -112,9 +112,9 @@ case class Corpus(commonWords: SortedSet[Word], uncommonWords: SortedSet[Word]) 
 
     def sizeHistogramOf(idSets: Set[Set[Int]], bucketSize: Int = 200, maxSetSize: Int): String = {
       val setQuantityBySize: SortedMap[Int, Int] = SortedMap.from(idSets.groupBy(_.size).mapV(_.size))
-      val bucketSizeByBucket: SortedMap[Int, Int] = SortedMap.from(setQuantityBySize.groupUp {
+      val bucketSizeByBucket: SortedMap[Int, Int] = SortedMap.from(setQuantityBySize.groupBy {
         case (setSize, quantity) => (setSize / bucketSize) * bucketSize
-      }(_.values.sum))
+      }.mapV(_.values.sum))
 
       val histogram = {
         val maxBucketSize = bucketSizeByBucket.values.max

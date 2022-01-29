@@ -105,15 +105,27 @@ case class Corpus(commonWords: SortedSet[Word], uncommonWords: SortedSet[Word]) 
     }
   }
 
+
+
   def analyseGrid() = {
-    def sizeHistogramOf(idSets: Set[Set[Int]], bucketSize: Int = 200): String = {
-      s"${idSets.size} sets \n" + {
-        val bucketSizeByBucket: SortedMap[Int, Int] = SortedMap.from(idSets.groupBy(idSet => (idSet.size / bucketSize) * bucketSize).mapV(_.size))
+    val strategies = Seq(BitSetSize, BestOfStrategy(Seq(ShortArraySize, InvertedShortArraySize)))
+
+    def sizeHistogramOf(idSets: Set[Set[Int]], bucketSize: Int = 200, maxSetSize: Int): String = {
+      val setQuantityBySize: SortedMap[Int, Int] = SortedMap.from(idSets.groupBy(_.size).mapV(_.size))
+      val bucketSizeByBucket: SortedMap[Int, Int] = SortedMap.from(setQuantityBySize.groupUp {
+        case (setSize, quantity) => (setSize / bucketSize) * bucketSize
+      }(_.values.sum))
+
+      val histogram = {
         val maxBucketSize = bucketSizeByBucket.values.max
         (for ((bucket, bucketSize) <- bucketSizeByBucket) yield {
           f"$bucket%5d : $bucketSize%6d ${Seq.fill(60 * bucketSize / maxBucketSize)("■").mkString}"
         }).mkString("\n")
       }
+      val storageSummary = strategies.map { strategy =>
+        f"${strategy.totalSizeFor(setQuantityBySize, maxSetSize)}%12d : $strategy"
+      }.mkString("\n")
+      s"${idSets.size} sets \n$histogram\nTotal storage required:\n$storageSummary"
     }
 
     val allPossibleSplitsForCandidates: Set[Set[SortedSet[Int]]] = possibleWordSetsForCandidates(initialCandidates)
@@ -124,8 +136,8 @@ case class Corpus(commonWords: SortedSet[Word], uncommonWords: SortedSet[Word]) 
 
     println(s"possibleCandidatesAfter1stMove=${possibleCandidatesAfter1stMove.size}")
 
-    println(s"possibleWordSetsAfterFirstMove=${sizeHistogramOf(possibleCandidatesAfter1stMove.map(_.possibleWords), 50)}")
-    println(s"possibleDiscriminatorSetsAfterFirstMove=${sizeHistogramOf(possibleCandidatesAfter1stMove.map(_.discriminators))}")
+    println(s"possibleWordSetsAfterFirstMove=${sizeHistogramOf(possibleCandidatesAfter1stMove.map(_.possibleWords), 50, 2315)}")
+    println(s"possibleDiscriminatorSetsAfterFirstMove=${sizeHistogramOf(possibleCandidatesAfter1stMove.map(_.discriminators), 200,12972)}")
 
   }
 
@@ -140,4 +152,36 @@ object Corpus {
   def load(): Corpus = Corpus.fromAsteriskFormat(
     Resources.asCharSource(getClass.getResource("/wordle-five-letter-words.txt"), UTF_8).readLines().asScala //.take(4000)
   )
+}
+
+case class SetRequirement(setSize: Int, maxQuantity: Int)
+
+trait SizeEstimator {
+  def storageBytesNeededFor(setRequirement: SetRequirement): Long
+
+  def totalSizeFor(setQuantityBySize: SortedMap[Int, Int], maxElementsPerSet: Int): Long = {
+    setQuantityBySize.map {
+      case (setSize, quantity) => quantity * storageBytesNeededFor(SetRequirement(setSize, maxElementsPerSet))
+    }.sum
+  }
+}
+
+object BitSetSize extends SizeEstimator {
+  override def storageBytesNeededFor(setRequirement: SetRequirement): Long =
+    Math.ceil(setRequirement.maxQuantity.toFloat / 8).toLong
+}
+
+object ShortArraySize extends SizeEstimator {
+  override def storageBytesNeededFor(setRequirement: SetRequirement): Long = setRequirement.setSize*2
+}
+
+object InvertedShortArraySize extends SizeEstimator {
+  override def storageBytesNeededFor(setRequirement: SetRequirement): Long =
+    ShortArraySize.storageBytesNeededFor(setRequirement.copy(setSize = setRequirement.maxQuantity - setRequirement.setSize))
+}
+
+case class BestOfStrategy(strategies: Seq[SizeEstimator]) extends SizeEstimator {
+  override def storageBytesNeededFor(setRequirement: SetRequirement): Long = {
+    strategies.map(_.storageBytesNeededFor(setRequirement)).min
+  }
 }

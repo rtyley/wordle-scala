@@ -16,21 +16,21 @@ class PossibleWordSet(data: Array[Long]) extends AbstractSet[Int] {
   override def excl(elem: Int): Predef.Set[Int] = ???
 
   override def contains(elem: Int): Boolean = {
-    val index: Int =  data.search(elem)((x: Long, y: Long) => ((x & 0xFFF) - (y & 0xFFF)).toInt).insertionPoint
+    val index: Int = ??? // data.search(elem)((x: Long, y: Long) => ((x & 0xFFF) - (y & 0xFFF)).toInt).insertionPoint
     elementsAtDataIndex(index).contains(elem)
   }
 
   private def elementsAtDataIndex(index: Int): Iterator[Int] = ???
 
   override def iterator: Iterator[Int] = new AbstractIterator[Int] {
-    private[this] var currentPos = if (start > 0) start >> LogWL else 0
+    private[this] var currentPos = 0
     final override def hasNext: Boolean = {
-
-      while (currentWord == 0) {
-        if (currentPos + 1 >= nwords) return false
-        currentPos += 1
-        currentWord = word(currentPos)
-      }
+//
+//      while (currentWord == 0) {
+//        if (currentPos + 1 >= nwords) return false
+//        currentPos += 1
+//        currentWord = word(currentPos)
+//      }
       true
     }
     final override def next(): Int = {
@@ -41,17 +41,17 @@ class PossibleWordSet(data: Array[Long]) extends AbstractSet[Int] {
   }
 }
 
-object PossibleWordSet extends SpecificIterableFactory[Int, PossibleWordSet] {
-
-  final val empty: PossibleWordSet = new PossibleWordSet(Array.empty)
-  def newBuilder: Builder[Int, PossibleWordSet] = PossibleWordSet.newBuilder
-  def fromSpecific(it: IterableOnce[Int]): PossibleWordSet = {
-    val items = SortedSet.from(it)
-    new PossibleWordSet(Array.from(items.grouped(5).map { g =>
-      g.foldLeft(0) {
-        case (total, wordId) => (total << 12) + wordId
-      }
-    }))
-  }
-
-}
+//object PossibleWordSet extends SpecificIterableFactory[Int, PossibleWordSet] {
+//
+//  final val empty: PossibleWordSet = new PossibleWordSet(Array.empty)
+//  def newBuilder: Builder[Int, PossibleWordSet] = PossibleWordSet.newBuilder
+//  def fromSpecific(it: IterableOnce[Int]): PossibleWordSet = {
+//    val items = SortedSet.from(it)
+//    new PossibleWordSet(Array.from(items.grouped(5).map { g =>
+//      g.foldLeft(0) {
+//        case (total, wordId) => (total << 12) + wordId
+//      }
+//    }))
+//  }
+//
+//}

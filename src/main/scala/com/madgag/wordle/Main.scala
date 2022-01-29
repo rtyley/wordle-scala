@@ -52,9 +52,9 @@ import scala.util.Random
     takeAGuess(assay, 0)
   }
 
-  for (_ <- 1 to 20) {
-    play(assay)
-  }
+//  for (_ <- 1 to 20) {
+//    play(assay)
+//  }
 
 
 }

@@ -11,12 +11,13 @@ import scala.jdk.CollectionConverters.*
 import java.nio.charset.{Charset, StandardCharsets}
 import java.nio.file.{Files, Path}
 import java.util.zip.{GZIPInputStream, GZIPOutputStream}
-import scala.collection.immutable.{ArraySeq, BitSet, SortedSet}
+import scala.collection.immutable.{ArraySeq, BitSet, SortedMap, SortedSet}
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 import scala.util.Using
 import scala.util.hashing.MurmurHash3
 import concurrent.ExecutionContext.Implicits.global
+import com.madgag.scala.collection.decorators.*
 
 case class Corpus(commonWords: SortedSet[Word], uncommonWords: SortedSet[Word]) {
   val commonWordsOrdered: IndexedSeq[Word] = commonWords.toIndexedSeq.sorted
@@ -72,6 +73,12 @@ case class Corpus(commonWords: SortedSet[Word], uncommonWords: SortedSet[Word]) 
     candidates.allWords.toSet.map(wordId => possibleWordSetsOnCandidate(candidates, wordId))
   }
 
+  def possibleCandidatesAfterNextPlayOn(candidates: Candidates): Set[Candidates] = {
+    Await.result(Future.traverse(possibleWordSetsForCandidates(candidates).flatten) { possWordset =>
+      Future(updateCandidatesWithNewPossibleWordSet(candidates, possWordset))
+    }, Duration.Inf)
+  }
+
 
   lazy val grid: Array[Array[Byte]] = {
     println(gridStorage.getAbsolutePath)
@@ -99,20 +106,27 @@ case class Corpus(commonWords: SortedSet[Word], uncommonWords: SortedSet[Word]) 
   }
 
   def analyseGrid() = {
+    def sizeHistogramOf(idSets: Set[Set[Int]], bucketSize: Int = 200): String = {
+      s"${idSets.size} sets \n" + {
+        val bucketSizeByBucket: SortedMap[Int, Int] = SortedMap.from(idSets.groupBy(idSet => (idSet.size / bucketSize) * bucketSize).mapV(_.size))
+        val maxBucketSize = bucketSizeByBucket.values.max
+        (for ((bucket, bucketSize) <- bucketSizeByBucket) yield {
+          f"$bucket%5d : $bucketSize%6d ${Seq.fill(60 * bucketSize / maxBucketSize)("■").mkString}"
+        }).mkString("\n")
+      }
+    }
+
     val allPossibleSplitsForCandidates: Set[Set[SortedSet[Int]]] = possibleWordSetsForCandidates(initialCandidates)
     println(allPossibleSplitsForCandidates.size)
 
-    val uniquePWSsAfterFirstMove = allPossibleSplitsForCandidates.flatten
-
-    println(s"num unique PWSets after initial move : ${uniquePWSsAfterFirstMove.size}")
-    val possibleCandidatesAfter1stMove: Set[Candidates] = Await.result(Future.traverse(uniquePWSsAfterFirstMove) { possWordset =>
-      Future(updateCandidatesWithNewPossibleWordSet(initialCandidates, possWordset))
-    }, Duration.Inf)
+    val possibleCandidatesAfter1stMove: Set[Candidates] = possibleCandidatesAfterNextPlayOn(initialCandidates)
     println(s"...candidates recomputed")
-    val allPossibleSplitsForCandidatesAfter1stMove = possibleCandidatesAfter1stMove.flatMap(possibleWordSetsForCandidates)
-    println(s"allPossibleSplitsForCandidatesAfter1stMove=${allPossibleSplitsForCandidatesAfter1stMove.size}")
-    val uniquePWSsAfter2ndMove = allPossibleSplitsForCandidatesAfter1stMove.flatten
-    println(s"uniquePWSsAfter2ndMove=${uniquePWSsAfter2ndMove.size}")
+
+    println(s"possibleCandidatesAfter1stMove=${possibleCandidatesAfter1stMove.size}")
+
+    println(s"possibleWordSetsAfterFirstMove=${sizeHistogramOf(possibleCandidatesAfter1stMove.map(_.possibleWords), 50)}")
+    println(s"possibleDiscriminatorSetsAfterFirstMove=${sizeHistogramOf(possibleCandidatesAfter1stMove.map(_.discriminators))}")
+
   }
 
 }

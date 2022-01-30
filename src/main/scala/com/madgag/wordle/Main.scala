@@ -26,8 +26,8 @@ import scala.util.Random
 
   def playThing(candidates: Candidates): Unit = {
     val targetWord: Word = corpus.pickRandomTargetWord()
-    val bestCandidateId = corpus.bestCandidate(0, candidates, SuccessValues.Prototype)
-    println(corpus.allWordsOrdered(bestCandidateId))
+    //val bestCandidateId = corpus.bestCandidate(0, candidates, SuccessValues.Prototype)
+    // println(corpus.allWordsOrdered(bestCandidateId))
   }
 
   def play(assay: Assay): Unit = {

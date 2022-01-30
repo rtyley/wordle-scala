@@ -86,30 +86,6 @@ case class Corpus(commonWords: SortedSet[Word], uncommonWords: SortedSet[Word]) 
       Future(updateCandidatesWithNewPossibleWordSet(candidates, possWordset))
     }, Duration.Inf)
   }
-  
-  def expectedUtility(guessIndex: Int, guessWordId: Int, candidates: Candidates, successValues: SuccessValues): Float = {
-    val possibleCandidateSets: Set[Candidates] = 
-      possibleWordSetsOnCandidate(candidates, guessWordId).map(pws => updateCandidatesWithNewPossibleWordSet(candidates, pws))
-
-    val probSuccessWithThisGuess: Float = 
-      if (candidates.possibleWords.contains(guessWordId)) 1f/candidates.possibleWords.size else 0
-      
-    val utilityOfNoSuccessThisGuess: Float = 
-      if (possibleCandidateSets.forall(_.possibleWords.size==1)) successValues.seq(guessIndex+1) else {
-        possibleCandidateSets.map { nextCandidates =>
-          val probWeGetThisCandidateSet = nextCandidates.possibleWords.size / candidates.possibleWords.size
-          val expectedUtilityOfBestNextCandidate: Float =
-            nextCandidates.allWords.map(nextCandidateId => expectedUtility(guessIndex + 1, nextCandidateId, nextCandidates, successValues)).max
-          expectedUtilityOfBestNextCandidate * probWeGetThisCandidateSet
-        }.sum
-      }
-    (successValues.seq(guessIndex) * probSuccessWithThisGuess) + ((1-probSuccessWithThisGuess) * utilityOfNoSuccessThisGuess)
-  }
-  
-  def bestCandidate(guessIndex: Int, candidates: Candidates, successValues: SuccessValues): Int = {
-    candidates.allWords.maxBy(candidateWordId => expectedUtility(guessIndex, candidateWordId, candidates, successValues))
-  }
-
 
   lazy val grid: Array[Array[Byte]] = {
     println(gridStorage.getAbsolutePath)

@@ -3,6 +3,10 @@ package com.madgag.wordle
 import com.madgag.wordle.approaches.tartan.Candidates
 
 class Explorer(corpus: Corpus, successValues: SuccessValues) {
+  def bestCandidate(guessIndex: Int, candidates: Candidates): Int = {
+    candidates.allWords.maxBy(candidateWordId => expectedUtility(guessIndex, candidateWordId, candidates))
+  }
+
   def expectedUtility(guessIndex: Int, candidateId: Int, candidates: Candidates): Float = {
     val probSuccessWithThisGuess: Float =
       if (candidates.possibleWords.contains(candidateId)) 1f/candidates.possibleWords.size else 0

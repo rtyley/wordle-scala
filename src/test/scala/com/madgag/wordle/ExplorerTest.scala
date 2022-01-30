@@ -28,4 +28,11 @@ class ExplorerTest extends AnyFlatSpec with Matchers {
       corpus.initialCandidates
     ) should === ((30/3)+((2f/3)*((22/2)+(1f/2))))
   }
+
+  it should "find the best candidate" in {
+    corpus.allWordsOrdered(explorer.bestCandidate(
+      0,
+      corpus.initialCandidates
+    )) shouldBe "angry"
+  }
 }

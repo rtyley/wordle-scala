@@ -2,6 +2,7 @@ package com.madgag.wordle
 
 import com.madgag.wordle.Wordle.*
 import com.madgag.scala.collection.decorators.*
+import com.madgag.wordle.approaches.tartan.Candidates
 
 import scala.jdk.CollectionConverters.*
 import java.nio.file.{Files, Paths}
@@ -15,17 +16,23 @@ import scala.util.Random
 
   println(corpus.grid)
 
-  corpus.analyseGrid()
+//  corpus.analyseGrid()
 
-  val assay = ??? // Await.result(Assay.assayFor(PossibleWords.allWordsFrom(corpus)), Duration.Inf)
+  playThing(corpus.initialCandidates)
 
 //  println("TOP\n"+assay.candidateWordAssaysSortedByScore.take(5))
 //
 //  println("BOTTOM\n"+assay.candidateWordAssaysSortedByScore.takeRight(5))
 
+  def playThing(candidates: Candidates): Unit = {
+    val targetWord: Word = corpus.pickRandomTargetWord()
+    val bestCandidateId = corpus.bestCandidate(0, candidates, SuccessValues.Prototype)
+    println(corpus.allWordsOrdered(bestCandidateId))
+  }
+
   def play(assay: Assay): Unit = {
     val popularWords: Set[Word] = assay.possibleWords.corpus.commonWords
-    val targetWord: Word = popularWords.toSeq(Random.nextInt(popularWords.size))
+    val targetWord: Word = corpus.pickRandomTargetWord()
 
 
     def takeAGuess(currentAssay: Assay, guessesTaken: Int): Unit = {

@@ -2,6 +2,7 @@ package com.madgag.wordle
 
 import com.madgag.wordle.Wordle.*
 import com.madgag.scala.collection.decorators.*
+import com.madgag.wordle.approaches.keepfeedback.Assay
 import com.madgag.wordle.approaches.tartan.Candidates
 
 import scala.jdk.CollectionConverters.*

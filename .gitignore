@@ -15,3 +15,8 @@ hs_err_pid*
 
 .bsp
 .idea
+.bloop
+.metals
+.vscode
+
+metals.sbt

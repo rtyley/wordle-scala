@@ -29,8 +29,6 @@ case class Corpus(commonWords: SortedSet[Word], uncommonWords: SortedSet[Word]) 
 
   val gridStorage: File = Path.of("/tmp", "wordle-scala-cache", s"$hash.data.gz").toFile
 
-  // def humanReadableWordsFor(bitMap: BitSet): Set[Word] = bitMap.map(orderedCommonWords(_))
-
   val initialCandidates: Candidates = Candidates(
     possibleWords = BitSet.fromSpecific(0 until commonWords.size),
     discriminators = BitSet.fromSpecific(commonWords.size until allWordsOrdered.size)

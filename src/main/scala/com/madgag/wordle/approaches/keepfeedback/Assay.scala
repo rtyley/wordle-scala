@@ -1,12 +1,13 @@
-package com.madgag.wordle
+package com.madgag.wordle.approaches.keepfeedback
 
-import com.madgag.wordle.Wordle.Word
 import com.madgag.scala.collection.decorators.*
+import com.madgag.wordle.Wordle.Word
 import com.madgag.wordle.approaches.keepfeedback.CandidateAssay
+import com.madgag.wordle.{Evidence, PossibleWords, WordSet}
 
 import scala.collection.immutable.SortedMap
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import concurrent.ExecutionContext.Implicits.global
 
 case class Assay(possibleWords: PossibleWords, candidateAssayByWord: Map[Word,CandidateAssay]) {
   

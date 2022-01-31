@@ -1,12 +1,12 @@
-package com.madgag.wordle
+package com.madgag.wordle.approaches.keepfeedback
 
-import com.madgag.wordle.Assay
 import com.madgag.wordle.Assay.assayFor
-import com.madgag.wordle.CandidateAssay.OnlyCompleteSuccess
+import CandidateAssay.OnlyCompleteSuccess
 import com.madgag.wordle.Evidence.evidenceFrom
 import com.madgag.wordle.LetterFeedback.*
 import com.madgag.wordle.PossibleWords.allWordsFrom
 import com.madgag.wordle.WordFeedback.{CompleteSuccess, feedbackFor}
+import com.madgag.wordle.{Assay, Corpus}
 import org.scalatest.Inspectors
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers

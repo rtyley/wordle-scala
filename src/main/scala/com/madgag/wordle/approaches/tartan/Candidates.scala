@@ -1,10 +1,11 @@
 package com.madgag.wordle.approaches.tartan
 
 import scala.collection.immutable.SortedSet
+import com.madgag.wordle.*
 
 case class Candidates(
-  possibleWords: SortedSet[Int],
-  discriminators: SortedSet[Int]
+  possibleWords: SortedSet[WordId],
+  discriminators: SortedSet[WordId]
 ) {
-  def allWords: IndexedSeq[Int] = (possibleWords ++ discriminators).toIndexedSeq
+  def allWords: IndexedSeq[WordId] = (possibleWords ++ discriminators).toIndexedSeq
 }

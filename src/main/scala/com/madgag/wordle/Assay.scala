@@ -1,7 +1,9 @@
 package com.madgag.wordle
 
 import com.madgag.wordle.Wordle.Word
-import com.madgag.scala.collection.decorators._
+import com.madgag.scala.collection.decorators.*
+import com.madgag.wordle.approaches.keepfeedback.CandidateAssay
+
 import scala.collection.immutable.SortedMap
 import scala.concurrent.Future
 import concurrent.ExecutionContext.Implicits.global

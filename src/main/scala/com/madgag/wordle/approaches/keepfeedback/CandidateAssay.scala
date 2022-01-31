@@ -1,7 +1,8 @@
-package com.madgag.wordle
+package com.madgag.wordle.approaches.keepfeedback
 
 import com.madgag.wordle.WordFeedback.CompleteSuccess
-import CandidateAssay.*
+import com.madgag.wordle.approaches.keepfeedback.CandidateAssay.*
+import com.madgag.wordle.{PossibleWordSetStore, WordFeedback, WordSet}
 
 import scala.collection.immutable.BitSet
 

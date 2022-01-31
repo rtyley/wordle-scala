@@ -36,19 +36,19 @@ case class Corpus(commonWords: SortedSet[Word], uncommonWords: SortedSet[Word]) 
     discriminators = BitSet.fromSpecific(commonWords.size until allWordsOrdered.size)
   )
 
-  def idFor(word: Word) = allWordsOrdered.indexOf(word)
+  def idFor(word: Word): WordId = allWordsOrdered.indexOf(word)
 
   def pickRandomTargetWord(): Word = commonWordsOrdered(Random.nextInt(commonWordsOrdered.size))
 
-  def updateCandidatesRemovingPossibleWord(candidates: Candidates, wordId: Int): Candidates = {
+  def updateCandidatesRemovingPossibleWord(candidates: Candidates, wordId: WordId): Candidates = {
     updateCandidatesWithNewPossibleWordSet(candidates, candidates.possibleWords - wordId)
   }
   
-  def updateCandidatesWithNewPossibleWordSet(candidates: Candidates, updatedPossibleWords: SortedSet[Int]): Candidates = {
+  def updateCandidatesWithNewPossibleWordSet(candidates: Candidates, updatedPossibleWords: SortedSet[WordId]): Candidates = {
     updateCandidatesWith(candidates, updatedPossibleWords, candidates.possibleWords -- updatedPossibleWords)
   }
 
-  def updateCandidatesWithEvidence(candidates: Candidates, evidenceWordId: Int, evidenceFeedback: WordFeedback): Candidates = {
+  def updateCandidatesWithEvidence(candidates: Candidates, evidenceWordId: WordId, evidenceFeedback: WordFeedback): Candidates = {
     val (possibleWordsThatRemainPossible, possibleWordsThatBecameImpossible) = {
       val gridEntryForEvidenceWord = grid(evidenceWordId)
       candidates.possibleWords.partition(gridEntryForEvidenceWord(_) == evidenceFeedback.underlying)
@@ -57,10 +57,10 @@ case class Corpus(commonWords: SortedSet[Word], uncommonWords: SortedSet[Word]) 
     updateCandidatesWith(candidates, possibleWordsThatRemainPossible, possibleWordsThatBecameImpossible)
   }
 
-  private def updateCandidatesWith(candidates: Candidates, possibleWordsThatRemainPossible: SortedSet[Int], possibleWordsThatBecameImpossible: SortedSet[Int]) = {
+  private def updateCandidatesWith(candidates: Candidates, possibleWordsThatRemainPossible: SortedSet[WordId], possibleWordsThatBecameImpossible: SortedSet[WordId]) = {
     // if the `Candidates` for possibleWordsThatRemainPossible is already available, return it, skip next part
 
-    val updatedDiscriminators: SortedSet[Int] = (candidates.discriminators ++ possibleWordsThatBecameImpossible).filter { wordId =>
+    val updatedDiscriminators: SortedSet[WordId] = (candidates.discriminators ++ possibleWordsThatBecameImpossible).filter { wordId =>
       val gridEntryForWord = grid(wordId)
       val firstFeedback = gridEntryForWord(possibleWordsThatRemainPossible.head)
       possibleWordsThatRemainPossible.view.tail.exists(gridEntryForWord(_) != firstFeedback)
@@ -72,12 +72,12 @@ case class Corpus(commonWords: SortedSet[Word], uncommonWords: SortedSet[Word]) 
     )
   }
 
-  def possibleWordSetsOnCandidate(candidates: Candidates, candidateWordId: Int): Set[SortedSet[Int]] = {
+  def possibleWordSetsOnCandidate(candidates: Candidates, candidateWordId: WordId): Set[SortedSet[WordId]] = {
     val gridEntryForWord = grid(candidateWordId)
     candidates.possibleWords.groupBy(gridEntryForWord).values.toSet
   }
 
-  def possibleWordSetsForCandidates(candidates: Candidates): Set[Set[SortedSet[Int]]] = {
+  def possibleWordSetsForCandidates(candidates: Candidates): Set[Set[SortedSet[WordId]]] = {
     candidates.allWords.toSet.map(wordId => possibleWordSetsOnCandidate(candidates, wordId))
   }
 
@@ -94,20 +94,20 @@ case class Corpus(commonWords: SortedSet[Word], uncommonWords: SortedSet[Word]) 
         s.readObject().asInstanceOf[Array[Array[Byte]]]
       }
     } else {
-      val tmpFile = File.createTempFile("temp", "skunky")
-      val gd = for {
+      val tmpFile = File.createTempFile("temp", "grid")
+      val gridAsBytes = for {
         candidateWord <- allWordsOrdered.toArray
       } yield {
         for (targetWord <- commonWordsOrdered) yield feedbackFor(candidateWord, targetWord).underlying
       }.toArray
 
       Using.resource(new ObjectOutputStream(new GZIPOutputStream(new FileOutputStream(tmpFile)))) { s =>
-        s.writeObject(gd)
+        s.writeObject(gridAsBytes)
       }
 
       gridStorage.getParentFile.mkdirs()
       Files.move(tmpFile.toPath, gridStorage.toPath)
-      gd
+      gridAsBytes
     }
   }
 
@@ -116,7 +116,7 @@ case class Corpus(commonWords: SortedSet[Word], uncommonWords: SortedSet[Word]) 
   def analyseGrid() = {
     val strategies = Seq(BitSetSize, BestOfStrategy(Seq(ShortArraySize, InvertedShortArraySize)))
 
-    def sizeHistogramOf(idSets: Set[Set[Int]], bucketSize: Int = 200, maxSetSize: Int): String = {
+    def sizeHistogramOf(idSets: Set[Set[WordId]], bucketSize: Int = 200, maxSetSize: Int): String = {
       val setQuantityBySize: SortedMap[Int, Int] = SortedMap.from(idSets.groupBy(_.size).mapV(_.size))
       val bucketSizeByBucket: SortedMap[Int, Int] = SortedMap.from(setQuantityBySize.groupBy {
         case (setSize, quantity) => (setSize / bucketSize) * bucketSize
@@ -134,7 +134,7 @@ case class Corpus(commonWords: SortedSet[Word], uncommonWords: SortedSet[Word]) 
       s"${idSets.size} sets \n$histogram\nTotal storage required:\n$storageSummary"
     }
 
-    val allPossibleSplitsForCandidates: Set[Set[SortedSet[Int]]] = possibleWordSetsForCandidates(initialCandidates)
+    val allPossibleSplitsForCandidates: Set[Set[SortedSet[WordId]]] = possibleWordSetsForCandidates(initialCandidates)
     println(allPossibleSplitsForCandidates.size)
 
     val possibleCandidatesAfter1stMove: Set[Candidates] = possibleCandidatesAfterNextPlayOn(initialCandidates)

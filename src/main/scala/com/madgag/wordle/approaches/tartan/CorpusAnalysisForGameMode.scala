@@ -50,19 +50,22 @@ class AnalysisForCorpusWithGameMode(corpusWithGameMode: CorpusWithGameMode, grid
     )
   }
 
+  def possibleCandidateSetsAfter(candidates: Candidates, playedCandidateId: WordId): Set[Candidates] = {
+    /**
+     * NORMAL: Partition possible words to comply with feedback, those that do not comply are possible
+     * discriminators. Filter those and other discriminators to ensure they still discriminate!
+     *
+     * HARD: Trim both possible words & discriminators to comply with feedback
+     */
+
+    possibleWordSetsOnCandidate(candidates, playedCandidateId).map(pws =>
+      updateCandidatesWithNewPossibleWordSet(candidates, pws)
+    )
+  }
+
   def possibleWordSetsOnCandidate(candidates: Candidates, candidateWordId: WordId): Set[SortedSet[WordId]] = {
     val gridEntryForWord = grid(candidateWordId)
     candidates.possibleWords.groupBy(gridEntryForWord).values.toSet
-  }
-
-  def possibleWordSetsForCandidates(candidates: Candidates): Set[Set[SortedSet[WordId]]] = {
-    candidates.allWords.toSet.map(wordId => possibleWordSetsOnCandidate(candidates, wordId))
-  }
-
-  def possibleCandidatesAfterNextPlayOn(candidates: Candidates): Set[Candidates] = {
-    Await.result(Future.traverse(possibleWordSetsForCandidates(candidates).flatten) { possWordset =>
-      Future(updateCandidatesWithNewPossibleWordSet(candidates, possWordset))
-    }, Duration.Inf)
   }
 
   def analyseGrid() = {
@@ -86,16 +89,16 @@ class AnalysisForCorpusWithGameMode(corpusWithGameMode: CorpusWithGameMode, grid
       s"${idSets.size} sets \n$histogram\nTotal storage required:\n$storageSummary"
     }
 
-    val allPossibleSplitsForCandidates: Set[Set[SortedSet[WordId]]] = possibleWordSetsForCandidates(corpus.initialCandidates)
-    println(allPossibleSplitsForCandidates.size)
+//    val allPossibleSplitsForCandidates: Set[Set[SortedSet[WordId]]] = possibleWordSetsForCandidates(corpus.initialCandidates)
+//    println(allPossibleSplitsForCandidates.size)
 
-    val possibleCandidatesAfter1stMove: Set[Candidates] = possibleCandidatesAfterNextPlayOn(corpus.initialCandidates)
-    println(s"...candidates recomputed")
-
-    println(s"possibleCandidatesAfter1stMove=${possibleCandidatesAfter1stMove.size}")
-
-    println(s"possibleWordSetsAfterFirstMove=${sizeHistogramOf(possibleCandidatesAfter1stMove.map(_.possibleWords), 50, 2315)}")
-    println(s"possibleDiscriminatorSetsAfterFirstMove=${sizeHistogramOf(possibleCandidatesAfter1stMove.map(_.discriminators), 200,12972)}")
+//    val possibleCandidatesAfter1stMove: Set[Candidates] = possibleCandidatesAfterNextPlayOn(corpus.initialCandidates)
+//    println(s"...candidates recomputed")
+//
+//    println(s"possibleCandidatesAfter1stMove=${possibleCandidatesAfter1stMove.size}")
+//
+//    println(s"possibleWordSetsAfterFirstMove=${sizeHistogramOf(possibleCandidatesAfter1stMove.map(_.possibleWords), 50, 2315)}")
+//    println(s"possibleDiscriminatorSetsAfterFirstMove=${sizeHistogramOf(possibleCandidatesAfter1stMove.map(_.discriminators), 200,12972)}")
 
   }
 }

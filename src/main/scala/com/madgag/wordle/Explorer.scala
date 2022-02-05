@@ -26,9 +26,7 @@ class Explorer(
 
   @inline private final def expectedUtilityOfLaterGuesses(playedCandidateId: Int, nextGuessIndex: Int, candidates: Candidates) = {
     val possibleCandidateSets: Set[Candidates] =
-      analysisForCorpusWithGameMode.possibleWordSetsOnCandidate(candidates, playedCandidateId).map(pws =>
-        analysisForCorpusWithGameMode.updateCandidatesWithNewPossibleWordSet(candidates, pws)
-      )
+      analysisForCorpusWithGameMode.possibleCandidateSetsAfter(candidates, playedCandidateId)
 
     val nextGuessIsCertainSuccess: Boolean = possibleCandidateSets.forall(_.possibleWords.size == 1)
     if (nextGuessIsCertainSuccess) successValues(nextGuessIndex) else possibleCandidateSets.map { nextCandidates =>

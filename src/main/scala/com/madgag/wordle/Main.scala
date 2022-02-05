@@ -16,7 +16,7 @@ import scala.util.Random
 @main def main() = {
   val corpus: Corpus = Corpus.load()
 
-  val analysisForCorpusWithGameMode = AnalysisForCorpusWithGameMode.obtainFor(corpus.withGameMode(Hard))
+  val analysisForCorpusWithGameMode = AnalysisForCorpusWithGameMode.obtainFor(corpus.withGameMode(Normal))
 
 //  corpus.analyseGrid()
 

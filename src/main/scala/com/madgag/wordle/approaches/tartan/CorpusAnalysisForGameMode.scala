@@ -36,18 +36,22 @@ class AnalysisForCorpusWithGameMode(corpusWithGameMode: CorpusWithGameMode, grid
   }
 
   private def updateCandidatesWith(candidates: Candidates, possibleWordsThatRemainPossible: SortedSet[WordId], possibleWordsThatBecameImpossible: SortedSet[WordId]) = {
-    // if the `Candidates` for possibleWordsThatRemainPossible is already available, return it, skip next part
+    // if the `Candidates` for possibleWordsThatRemainPossible is already cached, return it (hard-mode, uh-oh?), skip next part
 
-    val updatedDiscriminators: SortedSet[WordId] = (candidates.discriminators ++ possibleWordsThatBecameImpossible).filter { wordId =>
-      val gridEntryForWord = grid(wordId)
-      val firstFeedback = gridEntryForWord(possibleWordsThatRemainPossible.head)
-      possibleWordsThatRemainPossible.view.tail.exists(gridEntryForWord(_) != firstFeedback)
-    }
-
+    val possibleDiscriminators = candidates.discriminators ++ possibleWordsThatBecameImpossible
     Candidates(
       possibleWords = possibleWordsThatRemainPossible,
-      discriminators = updatedDiscriminators
+      discriminators = wordsThatDoStillDiscriminate(possibleDiscriminators, possibleWordsThatRemainPossible)
     )
+  }
+
+  private def wordsThatDoStillDiscriminate(
+    possibleDiscriminators: SortedSet[WordId],
+    possibleWordsThatRemainPossible: SortedSet[WordId]
+  ): SortedSet[WordId] = possibleDiscriminators.filter { wordId =>
+    val gridEntryForWord = grid(wordId)
+    val firstFeedback = gridEntryForWord(possibleWordsThatRemainPossible.head)
+    possibleWordsThatRemainPossible.view.tail.exists(gridEntryForWord(_) != firstFeedback)
   }
 
   def possibleCandidateSetsAfter(candidates: Candidates, playedCandidateId: WordId): Set[Candidates] = {
@@ -64,8 +68,22 @@ class AnalysisForCorpusWithGameMode(corpusWithGameMode: CorpusWithGameMode, grid
   }
 
   def possibleWordSetsOnCandidate(candidates: Candidates, candidateWordId: WordId): Set[SortedSet[WordId]] = {
+    possibleWordSetsByFeedback(candidates, candidateWordId).values.toSet
+  }
+
+  def possibleWordSetsByFeedback(candidates: Candidates, candidateWordId: WordId): Map[Byte, SortedSet[WordId]] = {
     val gridEntryForWord = grid(candidateWordId)
-    candidates.possibleWords.groupBy(gridEntryForWord).values.toSet
+    candidates.possibleWords.groupBy(gridEntryForWord)
+  }
+
+  def updateCandidatesGivenHardModePlay(candidates: Candidates, candidateWordId: WordId): Set[Candidates] = {
+    val gridEntryForWord = grid(candidateWordId)
+    val possibleWordSetsByFeedback = candidates.possibleWords.groupBy(gridEntryForWord)
+    val discriminatorsByFeedback = candidates.discriminators.groupBy(gridEntryForWord).withDefaultValue(SortedSet.empty[WordId])
+    for ((feedback, possibleWordSetGivenFeedback) <- possibleWordSetsByFeedback.toSet) yield Candidates(
+      possibleWords = possibleWordSetGivenFeedback,
+      discriminators = wordsThatDoStillDiscriminate(discriminatorsByFeedback(feedback), possibleWordSetGivenFeedback)
+    )
   }
 
   def analyseGrid() = {

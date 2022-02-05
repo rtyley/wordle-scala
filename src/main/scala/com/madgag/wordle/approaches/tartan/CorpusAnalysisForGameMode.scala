@@ -103,15 +103,12 @@ class AnalysisForCorpusWithGameMode(corpusWithGameMode: CorpusWithGameMode, grid
 object AnalysisForCorpusWithGameMode {
   def obtainFor(corpusWithGameMode: CorpusWithGameMode): AnalysisForCorpusWithGameMode = {
     val corpus = corpusWithGameMode.corpus
-    val analysisGridFile = corpusWithGameMode.storageDir.resolve("grid.gz")
-
-    val grid: Array[Array[Byte]] = LocalFileCache.obtain(analysisGridFile) {
-      val tmpFile = File.createTempFile("temp", "grid")
-
+    val grid: Array[Array[Byte]] = LocalFileCache.obtain(corpusWithGameMode.storageDir.resolve("grid.gz")) {
       for {
         candidateWord <- corpus.allWordsOrdered.toArray
       } yield {
-        for (targetWord <- corpus.commonWordsOrdered) yield feedbackFor(candidateWord, targetWord).underlying
+        for (targetWord <- corpusWithGameMode.wordsRequiringEvaluationAsTargets)
+          yield feedbackFor(candidateWord, targetWord).underlying
       }.toArray
     }
     AnalysisForCorpusWithGameMode(corpusWithGameMode, grid)

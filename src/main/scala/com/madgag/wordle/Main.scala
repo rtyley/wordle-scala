@@ -2,7 +2,7 @@ package com.madgag.wordle
 
 import com.madgag.wordle.Wordle.*
 import com.madgag.scala.collection.decorators.*
-import com.madgag.wordle.GameMode.Normal
+import com.madgag.wordle.GameMode.*
 import com.madgag.wordle.approaches.keepfeedback.Assay
 import com.madgag.wordle.approaches.tartan.{AnalysisForCorpusWithGameMode, Candidates}
 
@@ -16,7 +16,7 @@ import scala.util.Random
 @main def main() = {
   val corpus: Corpus = Corpus.load()
 
-  val analysisForCorpusWithGameMode = AnalysisForCorpusWithGameMode.obtainFor(corpus.withGameMode(Normal))
+  val analysisForCorpusWithGameMode = AnalysisForCorpusWithGameMode.obtainFor(corpus.withGameMode(Hard))
 
 //  corpus.analyseGrid()
 

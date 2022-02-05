@@ -1,6 +1,8 @@
 package com.madgag.wordle
 
+import com.madgag.wordle.GameMode.Normal
 import com.madgag.wordle.PossibleWords.allWordsFrom
+import com.madgag.wordle.approaches.tartan.AnalysisForCorpusWithGameMode
 import org.scalactic.{Equality, TolerantNumerics}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -11,7 +13,7 @@ class ExplorerTest extends AnyFlatSpec with Matchers {
   behavior of "Explorer"
 
   val corpus = Corpus.fromAsteriskFormat(Seq("aback*", "defer*", "gully*", "angry"))
-  val explorer = Explorer(corpus, SuccessValues(IndexedSeq(30, 22, 1)))
+  val explorer = Explorer(AnalysisForCorpusWithGameMode.obtainFor(corpus.withGameMode(Normal)), SuccessValues(IndexedSeq(30, 22, 1)))
 
   it should "understand that we have a certain win on the second guess" in {
     explorer.expectedUtility(

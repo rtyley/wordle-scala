@@ -27,123 +27,18 @@ case class Corpus(commonWords: SortedSet[Word], uncommonWords: SortedSet[Word]) 
 
   val hash: Int = MurmurHash3.orderedHashing.hash(allWordsOrdered)
 
-  val gridStorage: File = Path.of("/tmp", "wordle-scala-cache", s"$hash.data.gz").toFile
+  val id: String = s"corpus-${commonWords.size}-of-${allWordsOrdered.size}-words__${hash.toHexString.toUpperCase}"
 
   val initialCandidates: Candidates = Candidates(
     possibleWords = BitSet.fromSpecific(0 until commonWords.size),
     discriminators = BitSet.fromSpecific(commonWords.size until allWordsOrdered.size)
   )
 
+  def withGameMode(gameMode: GameMode): CorpusWithGameMode = CorpusWithGameMode(this, gameMode)
+
   def idFor(word: Word): WordId = allWordsOrdered.indexOf(word)
 
   def pickRandomTargetWord(): Word = commonWordsOrdered(Random.nextInt(commonWordsOrdered.size))
-
-  def updateCandidatesRemovingPossibleWord(candidates: Candidates, wordId: WordId): Candidates = {
-    updateCandidatesWithNewPossibleWordSet(candidates, candidates.possibleWords - wordId)
-  }
-  
-  def updateCandidatesWithNewPossibleWordSet(candidates: Candidates, updatedPossibleWords: SortedSet[WordId]): Candidates = {
-    updateCandidatesWith(candidates, updatedPossibleWords, candidates.possibleWords -- updatedPossibleWords)
-  }
-
-  def updateCandidatesWithEvidence(candidates: Candidates, evidenceWordId: WordId, evidenceFeedback: WordFeedback): Candidates = {
-    val (possibleWordsThatRemainPossible, possibleWordsThatBecameImpossible) = {
-      val gridEntryForEvidenceWord = grid(evidenceWordId)
-      candidates.possibleWords.partition(gridEntryForEvidenceWord(_) == evidenceFeedback.underlying)
-    }
-
-    updateCandidatesWith(candidates, possibleWordsThatRemainPossible, possibleWordsThatBecameImpossible)
-  }
-
-  private def updateCandidatesWith(candidates: Candidates, possibleWordsThatRemainPossible: SortedSet[WordId], possibleWordsThatBecameImpossible: SortedSet[WordId]) = {
-    // if the `Candidates` for possibleWordsThatRemainPossible is already available, return it, skip next part
-
-    val updatedDiscriminators: SortedSet[WordId] = (candidates.discriminators ++ possibleWordsThatBecameImpossible).filter { wordId =>
-      val gridEntryForWord = grid(wordId)
-      val firstFeedback = gridEntryForWord(possibleWordsThatRemainPossible.head)
-      possibleWordsThatRemainPossible.view.tail.exists(gridEntryForWord(_) != firstFeedback)
-    }
-
-    Candidates(
-      possibleWords = possibleWordsThatRemainPossible,
-      discriminators = updatedDiscriminators
-    )
-  }
-
-  def possibleWordSetsOnCandidate(candidates: Candidates, candidateWordId: WordId): Set[SortedSet[WordId]] = {
-    val gridEntryForWord = grid(candidateWordId)
-    candidates.possibleWords.groupBy(gridEntryForWord).values.toSet
-  }
-
-  def possibleWordSetsForCandidates(candidates: Candidates): Set[Set[SortedSet[WordId]]] = {
-    candidates.allWords.toSet.map(wordId => possibleWordSetsOnCandidate(candidates, wordId))
-  }
-
-  def possibleCandidatesAfterNextPlayOn(candidates: Candidates): Set[Candidates] = {
-    Await.result(Future.traverse(possibleWordSetsForCandidates(candidates).flatten) { possWordset =>
-      Future(updateCandidatesWithNewPossibleWordSet(candidates, possWordset))
-    }, Duration.Inf)
-  }
-
-  lazy val grid: Array[Array[Byte]] = {
-    println(gridStorage.getAbsolutePath)
-    if (gridStorage.exists()) {
-      Using.resource(new ObjectInputStream(new GZIPInputStream(new FileInputStream(gridStorage)))) { s =>
-        s.readObject().asInstanceOf[Array[Array[Byte]]]
-      }
-    } else {
-      val tmpFile = File.createTempFile("temp", "grid")
-      val gridAsBytes = for {
-        candidateWord <- allWordsOrdered.toArray
-      } yield {
-        for (targetWord <- commonWordsOrdered) yield feedbackFor(candidateWord, targetWord).underlying
-      }.toArray
-
-      Using.resource(new ObjectOutputStream(new GZIPOutputStream(new FileOutputStream(tmpFile)))) { s =>
-        s.writeObject(gridAsBytes)
-      }
-
-      gridStorage.getParentFile.mkdirs()
-      Files.move(tmpFile.toPath, gridStorage.toPath)
-      gridAsBytes
-    }
-  }
-
-
-
-  def analyseGrid() = {
-    val strategies = Seq(BitSetSize, BestOfStrategy(Seq(ShortArraySize, InvertedShortArraySize)))
-
-    def sizeHistogramOf(idSets: Set[Set[WordId]], bucketSize: Int = 200, maxSetSize: Int): String = {
-      val setQuantityBySize: SortedMap[Int, Int] = SortedMap.from(idSets.groupBy(_.size).mapV(_.size))
-      val bucketSizeByBucket: SortedMap[Int, Int] = SortedMap.from(setQuantityBySize.groupBy {
-        case (setSize, quantity) => (setSize / bucketSize) * bucketSize
-      }.mapV(_.values.sum))
-
-      val histogram = {
-        val maxBucketSize = bucketSizeByBucket.values.max
-        (for ((bucket, bucketSize) <- bucketSizeByBucket) yield {
-          f"$bucket%5d : $bucketSize%6d ${Seq.fill(60 * bucketSize / maxBucketSize)("■").mkString}"
-        }).mkString("\n")
-      }
-      val storageSummary = strategies.map { strategy =>
-        f"${strategy.totalSizeFor(setQuantityBySize, maxSetSize)}%12d : $strategy"
-      }.mkString("\n")
-      s"${idSets.size} sets \n$histogram\nTotal storage required:\n$storageSummary"
-    }
-
-    val allPossibleSplitsForCandidates: Set[Set[SortedSet[WordId]]] = possibleWordSetsForCandidates(initialCandidates)
-    println(allPossibleSplitsForCandidates.size)
-
-    val possibleCandidatesAfter1stMove: Set[Candidates] = possibleCandidatesAfterNextPlayOn(initialCandidates)
-    println(s"...candidates recomputed")
-
-    println(s"possibleCandidatesAfter1stMove=${possibleCandidatesAfter1stMove.size}")
-
-    println(s"possibleWordSetsAfterFirstMove=${sizeHistogramOf(possibleCandidatesAfter1stMove.map(_.possibleWords), 50, 2315)}")
-    println(s"possibleDiscriminatorSetsAfterFirstMove=${sizeHistogramOf(possibleCandidatesAfter1stMove.map(_.discriminators), 200,12972)}")
-
-  }
 
 }
 
@@ -154,7 +49,7 @@ object Corpus {
   }
 
   def load(): Corpus = Corpus.fromAsteriskFormat(
-    Resources.asCharSource(getClass.getResource("/wordle-five-letter-words.txt"), UTF_8).readLines().asScala //.take(4000)
+    Resources.asCharSource(getClass.getResource("/wordle-five-letter-words.txt"), UTF_8).readLines().asScala
   )
 }
 

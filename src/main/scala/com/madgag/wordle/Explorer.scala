@@ -1,8 +1,11 @@
 package com.madgag.wordle
 
-import com.madgag.wordle.approaches.tartan.Candidates
+import com.madgag.wordle.approaches.tartan.{AnalysisForCorpusWithGameMode, Candidates}
 
-class Explorer(corpus: Corpus, successValues: SuccessValues) {
+class Explorer(
+  analysisForCorpusWithGameMode: AnalysisForCorpusWithGameMode,
+  successValues: SuccessValues
+) {
   def bestCandidate(guessIndex: Int, candidates: Candidates): Int = {
     candidates.allWords.maxBy(candidateWordId => expectedUtility(guessIndex, candidateWordId, candidates))
   }
@@ -15,7 +18,7 @@ class Explorer(corpus: Corpus, successValues: SuccessValues) {
     val expectedUtilityOfImmediateSuccess = successValues.seq(guessIndex) * probSuccessWithThisGuess
 
     if (nextGuessIndex >= successValues.seq.size) expectedUtilityOfImmediateSuccess else expectedUtilityOfImmediateSuccess + {
-      val candidatesGivenTheGuessIsWrong = corpus.updateCandidatesRemovingPossibleWord(candidates, candidateId)
+      val candidatesGivenTheGuessIsWrong = analysisForCorpusWithGameMode.updateCandidatesRemovingPossibleWord(candidates, candidateId)
 
       (1 - probSuccessWithThisGuess) * expectedUtilityOfLaterGuesses(candidateId, nextGuessIndex, candidatesGivenTheGuessIsWrong)
     }
@@ -23,8 +26,8 @@ class Explorer(corpus: Corpus, successValues: SuccessValues) {
 
   @inline private final def expectedUtilityOfLaterGuesses(playedCandidateId: Int, nextGuessIndex: Int, candidates: Candidates) = {
     val possibleCandidateSets: Set[Candidates] =
-      corpus.possibleWordSetsOnCandidate(candidates, playedCandidateId).map(pws =>
-        corpus.updateCandidatesWithNewPossibleWordSet(candidates, pws)
+      analysisForCorpusWithGameMode.possibleWordSetsOnCandidate(candidates, playedCandidateId).map(pws =>
+        analysisForCorpusWithGameMode.updateCandidatesWithNewPossibleWordSet(candidates, pws)
       )
 
     val nextGuessIsCertainSuccess: Boolean = possibleCandidateSets.forall(_.possibleWords.size == 1)

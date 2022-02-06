@@ -10,7 +10,7 @@ import scala.util.Using
 object LocalFileCache {
   def obtain[T](path: Path)(generate: => T): T = {
     val file = path.toFile
-    println(file.getAbsolutePath)
+    println(s"Cached file at ${file.getAbsolutePath}")
     if (file.exists()) {
       Using.resource(new ObjectInputStream(new GZIPInputStream(new FileInputStream(file)))) { s =>
         s.readObject().asInstanceOf[T]
@@ -25,6 +25,7 @@ object LocalFileCache {
 
       file.getParentFile.mkdirs()
       Files.move(tmpFile.toPath, path)
+      println(s"File stored to ${file.getAbsolutePath}")
       data
     }
   }

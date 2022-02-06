@@ -10,6 +10,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.jdk.CollectionConverters.*
 
+type Word = String
 type WordId = Int
 
 object Wordle {
@@ -17,7 +18,6 @@ object Wordle {
   val WordIndices: Seq[Int] = 0 until WordLength
 
   type Letter = Char
-  type Word = String
 
   // type WordFeedback = Seq[LetterFeedback]
   

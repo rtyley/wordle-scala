@@ -2,7 +2,7 @@ package com.madgag.wordle
 
 import com.madgag.scala.collection.decorators.*
 import com.madgag.wordle.LetterFeedback.*
-import com.madgag.wordle.Wordle.{Foo, Word, WordIndices, WordLength}
+import com.madgag.wordle.Wordle.{Foo, WordIndices, WordLength}
 
 class WordFeedback(val underlying: Byte) extends AnyVal {
   def toSeq: Seq[LetterFeedback] = {

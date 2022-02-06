@@ -1,8 +1,6 @@
 package com.madgag.wordle
 
-import com.madgag.wordle.Wordle.Word
-
-case class Evidence(word: Wordle.Word, wordFeedback: WordFeedback) {
+case class Evidence(word: Word, wordFeedback: WordFeedback) {
   val ansiColouredString: fansi.Str = (for ((attr, char) <- wordFeedback.toSeq.map(_.ansiColor).zip(word)) yield {
     attr(char.toString)
   }).reduce(_ ++ _)

@@ -2,7 +2,6 @@ package com.madgag.wordle
 
 import com.google.common.io.{CharStreams, Resources}
 import com.madgag.wordle.WordFeedback.feedbackFor
-import com.madgag.wordle.Wordle.Word
 import com.madgag.wordle.approaches.tartan.Candidates
 
 import java.io.{File, FileInputStream, FileOutputStream, ObjectInputStream, ObjectOutputStream}

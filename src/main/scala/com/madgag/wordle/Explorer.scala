@@ -11,29 +11,24 @@ class Explorer(
   }
 
   def expectedUtility(guessIndex: Int, candidateId: Int, candidates: Candidates): Float = {
-    val probSuccessWithThisGuess: Float =
-      if (candidates.possibleWords.contains(candidateId)) 1f/candidates.possibleWords.size else 0
+    val numPossibilitiesOfImmediateSuccessWithGuess =
+      if (candidates.possibleWords.contains(candidateId)) 1 else 0
 
     val nextGuessIndex = guessIndex + 1
-    val expectedUtilityOfImmediateSuccess = successValues.seq(guessIndex) * probSuccessWithThisGuess
+    val expectedUtilityOfImmediateSuccess = successValues.seq(guessIndex) * numPossibilitiesOfImmediateSuccessWithGuess
+    val numPossibleWords = candidates.possibleWords.size
 
-    if (nextGuessIndex >= successValues.seq.size) expectedUtilityOfImmediateSuccess else expectedUtilityOfImmediateSuccess + {
-      val candidatesGivenTheGuessIsWrong = analysisForCorpusWithGameMode.updateCandidatesRemovingPossibleWord(candidates, candidateId)
+    (if (nextGuessIndex >= successValues.seq.size) expectedUtilityOfImmediateSuccess else expectedUtilityOfImmediateSuccess + {
+      val possibleCandidateSets: Set[Candidates] =
+        (analysisForCorpusWithGameMode.possibleCandidateSetsIfCandidatePlayed(candidates, candidateId) - WordFeedback.CompleteSuccess).values.toSet
 
-      (1 - probSuccessWithThisGuess) * expectedUtilityOfLaterGuesses(candidateId, nextGuessIndex, candidatesGivenTheGuessIsWrong)
-    }
+      if (nextGuessIsCertainSuccessGiven(possibleCandidateSets)) (numPossibleWords-numPossibilitiesOfImmediateSuccessWithGuess)*successValues(nextGuessIndex) else possibleCandidateSets.map { nextCandidates =>
+        nextCandidates.possibleWords.size *
+          nextCandidates.allWords.map(nextCandidateId => expectedUtility(nextGuessIndex, nextCandidateId, nextCandidates)).max
+      }.sum
+    }) / numPossibleWords
   }
 
-  @inline private final def expectedUtilityOfLaterGuesses(playedCandidateId: Int, nextGuessIndex: Int, candidates: Candidates) = {
-    val possibleCandidateSets: Set[Candidates] =
-      analysisForCorpusWithGameMode.possibleCandidateSetsAfter(candidates, playedCandidateId)
-
-    val nextGuessIsCertainSuccess: Boolean = possibleCandidateSets.forall(_.possibleWords.size == 1)
-    if (nextGuessIsCertainSuccess) successValues(nextGuessIndex) else possibleCandidateSets.map { nextCandidates =>
-      val probWeGetThisCandidateSet = nextCandidates.possibleWords.size / candidates.possibleWords.size
-      val expectedUtilityOfBestNextCandidate: Float =
-        nextCandidates.allWords.map(nextCandidateId => expectedUtility(nextGuessIndex, nextCandidateId, nextCandidates)).max
-      expectedUtilityOfBestNextCandidate * probWeGetThisCandidateSet
-    }.sum
-  }
+  private def nextGuessIsCertainSuccessGiven(possibleCandidateSets: Set[Candidates]): Boolean =
+    possibleCandidateSets.forall(_.possibleWords.size == 1)
 }

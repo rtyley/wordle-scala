@@ -1,7 +1,7 @@
 package com.madgag.wordle.approaches.keepfeedback
 
 import com.madgag.scala.collection.decorators.*
-import com.madgag.wordle.Wordle.Word
+import com.madgag.wordle.*
 import com.madgag.wordle.approaches.keepfeedback.CandidateAssay
 import com.madgag.wordle.{Evidence, PossibleWords, WordSet}
 

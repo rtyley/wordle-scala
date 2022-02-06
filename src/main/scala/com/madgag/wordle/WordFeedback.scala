@@ -2,7 +2,7 @@ package com.madgag.wordle
 
 import com.madgag.scala.collection.decorators.*
 import com.madgag.wordle.LetterFeedback.*
-import com.madgag.wordle.Wordle.{Foo, WordIndices, WordLength}
+import com.madgag.wordle.Wordle.{Letter, WordIndices, WordLength}
 
 class WordFeedback(val underlying: Byte) extends AnyVal {
   def toSeq: Seq[LetterFeedback] = {
@@ -47,8 +47,10 @@ object WordFeedback {
 
   def feedbackFor(candidate: Word, actual: Word): WordFeedback = {
     val (correctIndices, incorrectIndices) = WordIndices.partition(index => candidate(index) == actual(index))
-    val misplacedLetterIndices = incorrectIndices.foldLeft(Foo(remainingActualLetters = incorrectIndices.map(actual).groupUp(identity)(_.size))) {
-      case (foo, incorrectIndex) => foo.attemptTake(candidate(incorrectIndex), incorrectIndex)
+    val misplacedLetterIndices = incorrectIndices.foldLeft(AvailableAndMisplacedLetters(
+      remainingActualLetters = incorrectIndices.map(actual).groupUp(identity)(_.size))
+    ) {
+      case (availableAndMisplacedLetters, incorrectIndex) => availableAndMisplacedLetters.attemptTake(candidate(incorrectIndex), incorrectIndex)
     }.misplacedLetterIndices
 
     val letterFeedbackByIndex =
@@ -56,4 +58,13 @@ object WordFeedback {
     WordFeedback(WordIndices.map(letterFeedbackByIndex))
   }
 
+  case class AvailableAndMisplacedLetters(remainingActualLetters: Map[Letter, Int], misplacedLetterIndices: Set[Int] = Set.empty) {
+    def attemptTake(letter: Letter, letterIndex: Int): AvailableAndMisplacedLetters = {
+      val quantityOfLetterAvailable = remainingActualLetters.getOrElse(letter, 0)
+      if (quantityOfLetterAvailable <= 0) this else AvailableAndMisplacedLetters(
+        remainingActualLetters.updated(letter, quantityOfLetterAvailable - 1),
+        misplacedLetterIndices + letterIndex
+      )
+    }
+  }
 }

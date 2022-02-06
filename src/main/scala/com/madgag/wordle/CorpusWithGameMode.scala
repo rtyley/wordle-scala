@@ -6,7 +6,7 @@ import java.nio.file.Path
 
 case class CorpusWithGameMode(corpus: Corpus, gameMode: GameMode) {
   
-  val storageDir: Path = Path.of("/tmp", "wordle-scala-cache", corpus.id, gameMode.getClass.getSimpleName)
+  val storageDir: Path = Path.of("/tmp", "wordle-scala-cache", corpus.id, gameMode.getClass.getSimpleName.stripSuffix("$"))
   
   val wordsRequiringEvaluationAsTargets: IndexedSeq[Word] = gameMode.wordsRequiringEvaluationAsTargets(corpus)
 }

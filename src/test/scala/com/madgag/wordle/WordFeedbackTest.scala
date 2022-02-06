@@ -38,5 +38,10 @@ class WordFeedbackTest extends AnyWordSpec with Matchers {
         feedbackFor(candidateWord, "PERKY").emojis shouldBe expectedFeedback
       }
     }
+
+    "do examples found in http://sonorouschocolate.com/notes/index.php?title=The_best_strategies_for_Wordle" in {
+      feedbackFor("SILLY", "HOTEL").emojis shouldBe "⬜⬜🟨⬜⬜"
+      feedbackFor("SILLY", "DAILY").emojis shouldBe "⬜🟨⬜🟩🟩"
+    }
   }
 }

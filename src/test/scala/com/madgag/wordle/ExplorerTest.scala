@@ -64,7 +64,8 @@ class ExplorerTest extends AnyFlatSpec with Matchers with EitherValues {
   it should "play hard mode" in {
     val corpusWithGameMode = Corpus.load().withGameMode(Hard)
     println(s"Loaded ${corpusWithGameMode.corpus.id}")
-    val gameState = Game(targetWord = "fight", corpusWithGameMode).start
+    val game = Game(targetWord = "fight", corpusWithGameMode)
+    val gameState = game.start
     println(s"We've started da game!")
     val g1state = gameState.play("might").value
     g1state.evidence.last.wordFeedback.emojis shouldBe "⬜🟩🟩🟩🟩"
@@ -72,6 +73,21 @@ class ExplorerTest extends AnyFlatSpec with Matchers with EitherValues {
     g1state.canPlay("light") shouldBe true
     g1state.canPlay("forge") shouldBe false
     println(s"g1state.possibleWords = ${g1state.possibleWords}")
+    val hardExplorer = Explorer(game.analysis, V)
+//    val bestWordId = hardExplorer.bestCandidate(0, corpusWithGameMode.corpus.initialCandidates)
+//    println(bestWordId)
+//    bestWordId
+  }
+
+  it should "evaluate from 'roate''" in {
+    val c = Corpus.load()
+    val corpusWithGameMode = c.withGameMode(Normal)
+
+
+    val explorer = Explorer(AnalysisForCorpusWithGameMode.obtainFor(corpusWithGameMode), SuccessValues.Prototype)
+
+    val roateExpectedUtility = explorer.expectedUtility(0, c.idFor("roate"), c.initialCandidates)
+    println(roateExpectedUtility)
   }
 
 }

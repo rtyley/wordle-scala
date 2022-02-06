@@ -2,7 +2,7 @@ package com.madgag.wordle
 
 import com.madgag.wordle.approaches.tartan.{AnalysisForCorpusWithGameMode, Candidates}
 
-class Explorer(
+case class Explorer(
   analysisForCorpusWithGameMode: AnalysisForCorpusWithGameMode,
   successValues: SuccessValues
 ) {

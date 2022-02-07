@@ -2,12 +2,20 @@ package com.madgag.wordle
 
 import com.madgag.wordle.approaches.tartan.{AnalysisForCorpusWithGameMode, Candidates}
 
+// import scala.collection.parallel.CollectionConverters.*
+import scala.concurrent.{Await, Future}
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.Duration
+
 case class Explorer(
   analysisForCorpusWithGameMode: AnalysisForCorpusWithGameMode,
   successValues: SuccessValues
 ) {
-  def bestCandidate(guessIndex: Int, candidates: Candidates): Int = {
-    candidates.allWords.maxBy(candidateWordId => expectedUtility(guessIndex, candidateWordId, candidates))
+  def bestCandidate(guessIndex: Int, candidates: Candidates): WordId = {
+    Await.result(Future.traverse(candidates.allWords) { wordId =>
+      Future(wordId -> expectedUtility(guessIndex, wordId, candidates))
+    }, Duration.Inf).maxBy(_._2)._1
+    // candidates.allWords.maxBy(candidateWordId => expectedUtility(guessIndex, candidateWordId, candidates))
   }
 
   def expectedUtility(guessIndex: Int, candidateId: WordId, candidates: Candidates): Float = {
@@ -15,7 +23,7 @@ case class Explorer(
       if (candidates.possibleWords.contains(candidateId)) 1 else 0
 
     val nextGuessIndex = guessIndex + 1
-    val expectedUtilityOfImmediateSuccess = successValues.seq(guessIndex) * numPossibilitiesOfImmediateSuccessWithGuess
+    val expectedUtilityOfImmediateSuccess = successValues(guessIndex) * numPossibilitiesOfImmediateSuccessWithGuess
     val numPossibleWords = candidates.possibleWords.size
 
     (if (nextGuessIndex >= successValues.seq.size) expectedUtilityOfImmediateSuccess else expectedUtilityOfImmediateSuccess + {

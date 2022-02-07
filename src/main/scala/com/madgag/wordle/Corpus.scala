@@ -38,6 +38,13 @@ case class Corpus(commonWords: SortedSet[Word], uncommonWords: SortedSet[Word]) 
 
   def pickRandomTargetWord(): Word = commonWordsOrdered(Random.nextInt(commonWordsOrdered.size))
 
+
+  def reduceByAFactorOf(factor: Int): Corpus = {
+    def winnow(words: SortedSet[Word]):SortedSet[Word] =
+      SortedSet.from(words.zipWithIndex.collect {case (e,i) if (i % factor) == 0 => e})
+    
+    Corpus(winnow(commonWords), winnow(uncommonWords))
+  }
 }
 
 object Corpus {

@@ -11,6 +11,6 @@ case class Candidates(
   discriminators: WordSet
 ) {
   def contains(word: WordId) = possibleWords.contains(word) || discriminators.contains(word)
-  
-  def allWords: Iterator[WordId] = possibleWords.iterator ++ discriminators.iterator
+
+  def allWords: Iterable[WordId] = possibleWords.view ++ discriminators
 }

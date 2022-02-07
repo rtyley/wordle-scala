@@ -1,20 +1,20 @@
 package com.madgag.wordle.approaches.tartan
 
-import com.madgag.wordle.*
+import com.madgag.scala.collection.decorators.*
+import com.madgag.wordle.GameMode.*
 import com.madgag.wordle.WordFeedback.feedbackFor
-import com.madgag.wordle.{BestOfStrategy, BitSetSize, Corpus, CorpusWithGameMode, GameMode, InvertedShortArraySize, LocalFileCache, ShortArraySize, WordFeedback}
+import com.madgag.wordle.*
+import com.madgag.wordle.wordsets.WordSet
 
-import java.io.{File, FileInputStream, FileOutputStream, ObjectInputStream, ObjectOutputStream}
+import java.io.*
 import java.nio.file.Files
 import java.util.zip.{GZIPInputStream, GZIPOutputStream}
 import scala.collection.immutable.{SortedMap, SortedSet}
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 import scala.util.Using
-import com.madgag.scala.collection.decorators.*
-import com.madgag.wordle.GameMode.*
 
-import concurrent.ExecutionContext.Implicits.global
 
 sealed trait AnalysisForCorpusWithGameMode(
   corpus: Corpus,
@@ -25,13 +25,17 @@ sealed trait AnalysisForCorpusWithGameMode(
   def possibleCandidateSetsIfCandidatePlayed(candidates: Candidates, playedCandidateId: WordId): Map[WordFeedback,Candidates]
 
   def wordsThatDoStillDiscriminate(
-    possibleDiscriminators: SortedSet[WordId],
-    possibleWordsThatRemainPossible: SortedSet[WordId]
-  ): SortedSet[WordId] = possibleDiscriminators.filter { wordId =>
+    possibleDiscriminators: Iterable[WordId], // Is it _best_ for it to be a WordSet?
+    possibleWordsThatRemainPossible: WordSet
+  ): WordSet = if (possibleWordsThatRemainPossible.sizeIs <= 2) WordSet.empty else WordSet.fromSpecific(possibleDiscriminators.filter { wordId =>
     val gridEntryForWord = grid(wordId)
     val firstFeedback = gridEntryForWord(possibleWordsThatRemainPossible.head)
-    possibleWordsThatRemainPossible.view.tail.exists(gridEntryForWord(_) != firstFeedback)
-  }
+    // possibleWordsThatRemainPossible.view.tail.exists(gridEntryForWord(_) != firstFeedback)
+    val bool = possibleWordsThatRemainPossible.exists {
+      gridEntryForWord(_) != firstFeedback
+    }
+    bool
+  })
 }
 
 class AnalysisForCorpusWithNormalMode(
@@ -39,25 +43,28 @@ class AnalysisForCorpusWithNormalMode(
   grid: Array[Array[Byte]]
 ) extends AnalysisForCorpusWithGameMode(corpus, Normal, grid) {
 
-  def possibleWordSetsOnCandidate(candidates: Candidates, playedCandidateId: WordId): Map[Byte, SortedSet[WordId]] = {
+  def possibleWordSetsOnCandidate(candidates: Candidates, playedCandidateId: WordId): Map[Byte, WordSet] = {
     val gridEntryForWord = grid(playedCandidateId)
-    candidates.possibleWords.groupBy(gridEntryForWord)
+    candidates.possibleWords.groupBy(gridEntryForWord(_))
   }
 
   def updateCandidatesRemovingPossibleWord(candidates: Candidates, wordId: WordId): Candidates = {
     updateCandidatesWithNewPossibleWordSet(candidates, candidates.possibleWords - wordId)
   }
 
-  def updateCandidatesWithNewPossibleWordSet(candidates: Candidates, updatedPossibleWords: SortedSet[WordId]): Candidates = {
-    updateCandidatesWith(candidates, updatedPossibleWords, candidates.possibleWords -- updatedPossibleWords)
+  def updateCandidatesWithNewPossibleWordSet(candidates: Candidates, updatedPossibleWords: WordSet): Candidates = {
+    updateCandidatesWith(
+      candidates,
+      updatedPossibleWords,
+      candidates.possibleWords -- updatedPossibleWords // it would be good to have this op on WordSets optimised
+    )
   }
 
-
-
-  private def updateCandidatesWith(candidates: Candidates, possibleWordsThatRemainPossible: SortedSet[WordId], possibleWordsThatBecameImpossible: SortedSet[WordId]) = {
+  private def updateCandidatesWith(candidates: Candidates, possibleWordsThatRemainPossible: WordSet, possibleWordsThatBecameImpossible: WordSet) = {
     // if the `Candidates` for possibleWordsThatRemainPossible is already cached, return it (hard-mode, uh-oh?), skip next part
-
-    val possibleDiscriminators = candidates.discriminators ++ possibleWordsThatBecameImpossible
+    val possibleDiscriminators =
+      Iterable.concat(possibleWordsThatBecameImpossible, candidates.discriminators) // we like these being in order, but don't *need* to do more than iterate over them
+    // possibleWordsThatBecameImpossible ++ candidates.discriminators
     Candidates(
       possibleWords = possibleWordsThatRemainPossible,
       discriminators = wordsThatDoStillDiscriminate(possibleDiscriminators, possibleWordsThatRemainPossible)
@@ -85,8 +92,8 @@ class AnalysisForCorpusWithHardMode(
    */
   def possibleCandidateSetsIfCandidatePlayed(candidates: Candidates, playedWordId: WordId): Map[WordFeedback,Candidates] = {
     val gridEntryForWord = grid(playedWordId)
-    val possibleWordSetsByFeedback = candidates.possibleWords.groupBy(gridEntryForWord)
-    val discriminatorsByFeedback = candidates.discriminators.groupBy(gridEntryForWord).withDefaultValue(SortedSet.empty[WordId])
+    val possibleWordSetsByFeedback = candidates.possibleWords.groupBy(gridEntryForWord(_))
+    val discriminatorsByFeedback = candidates.discriminators.groupBy(gridEntryForWord(_)).withDefaultValue(WordSet.empty)
     for ((feedback, possibleWordSetGivenFeedback) <- possibleWordSetsByFeedback) yield new WordFeedback(feedback) -> Candidates(
       possibleWords = possibleWordSetGivenFeedback,
       discriminators = wordsThatDoStillDiscriminate(discriminatorsByFeedback(feedback), possibleWordSetGivenFeedback)

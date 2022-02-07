@@ -10,7 +10,7 @@ case class Explorer(
     candidates.allWords.maxBy(candidateWordId => expectedUtility(guessIndex, candidateWordId, candidates))
   }
 
-  def expectedUtility(guessIndex: Int, candidateId: Int, candidates: Candidates): Float = {
+  def expectedUtility(guessIndex: Int, candidateId: WordId, candidates: Candidates): Float = {
     val numPossibilitiesOfImmediateSuccessWithGuess =
       if (candidates.possibleWords.contains(candidateId)) 1 else 0
 

@@ -17,25 +17,24 @@ import scala.util.{Random, Using}
 import scala.util.hashing.MurmurHash3
 import concurrent.ExecutionContext.Implicits.global
 import com.madgag.scala.collection.decorators.*
+import com.madgag.wordle.wordsets.{ShortArrayWordSet, WordSet}
 
 case class Corpus(commonWords: SortedSet[Word], uncommonWords: SortedSet[Word]) {
   val commonWordsOrdered: IndexedSeq[Word] = commonWords.toIndexedSeq.sorted
   val allWordsOrdered: IndexedSeq[Word]  = commonWordsOrdered ++ uncommonWords.toIndexedSeq
-
-  val idForSetOfAllCommonWords: WordSet = PossibleWordSetStore.intern((0 until commonWords.size).toSet)
 
   val hash: Int = MurmurHash3.orderedHashing.hash(allWordsOrdered)
 
   val id: String = s"corpus-${commonWords.size}-of-${allWordsOrdered.size}-words__${hash.toHexString.toUpperCase}"
 
   val initialCandidates: Candidates = Candidates(
-    possibleWords = BitSet.fromSpecific(0 until commonWords.size),
-    discriminators = BitSet.fromSpecific(commonWords.size until allWordsOrdered.size)
+    possibleWords = ShortArrayWordSet.fromSpecific((0 until commonWords.size).map(_.toShort)),
+    discriminators = ShortArrayWordSet.fromSpecific((commonWords.size until allWordsOrdered.size).map(_.toShort))
   )
 
   def withGameMode(gameMode: GameMode): CorpusWithGameMode = CorpusWithGameMode(this, gameMode)
 
-  def idFor(word: Word): WordId = allWordsOrdered.indexOf(word)
+  def idFor(word: Word): WordId = allWordsOrdered.indexOf(word).toShort
 
   def pickRandomTargetWord(): Word = commonWordsOrdered(Random.nextInt(commonWordsOrdered.size))
 

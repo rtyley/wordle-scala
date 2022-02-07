@@ -2,10 +2,15 @@ package com.madgag.wordle.approaches.tartan
 
 import scala.collection.immutable.SortedSet
 import com.madgag.wordle.*
+import com.madgag.wordle.wordsets.WordSet
+
+import scala.math.Ordering
 
 case class Candidates(
-  possibleWords: SortedSet[WordId],
-  discriminators: SortedSet[WordId]
+  possibleWords: WordSet,
+  discriminators: WordSet
 ) {
-  def allWords: IndexedSeq[WordId] = (possibleWords ++ discriminators).toIndexedSeq
+  def contains(word: WordId) = possibleWords.contains(word) || discriminators.contains(word)
+  
+  def allWords: Iterator[WordId] = possibleWords.iterator ++ discriminators.iterator
 }

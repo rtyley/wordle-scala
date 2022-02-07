@@ -18,7 +18,7 @@ case class GameState(game: Game, playedWords: Seq[Word], candidates: Candidates)
   def play(word: Word): Either[String, GameState] = {
     val wordId = game.corpus.idFor(word)
     if (wordId < 0) Left(s"'$word' is not in corpus (${game.corpus.id})") else {
-      if (!candidates.allWords.contains(wordId)) Left("'$word' either prohibited, or does not discriminate solutions") else {
+      if (!candidates.contains(wordId)) Left("'$word' either prohibited, or does not discriminate solutions") else {
         val wordFeedback = WordFeedback.feedbackFor(word, game.targetWord)
 
         val updatedCandidates = game.analysis.possibleCandidateSetsIfCandidatePlayed(candidates, wordId)(wordFeedback)
@@ -27,9 +27,9 @@ case class GameState(game: Game, playedWords: Seq[Word], candidates: Candidates)
     }
   }
   
-  def canPlay(word: Word): Boolean = candidates.allWords.contains(game.corpus.idFor(word))
+  def canPlay(word: Word): Boolean = candidates.contains(game.corpus.idFor(word))
   
   lazy val evidence: Seq[Evidence] = playedWords.map(evidenceFrom(_, game.targetWord))
   
-  lazy val possibleWords: SortedSet[Word] = candidates.possibleWords.map(game.corpus.allWordsOrdered)
+  lazy val possibleWords: SortedSet[Word] = candidates.possibleWords.map(game.corpus.allWordsOrdered(_))
 }

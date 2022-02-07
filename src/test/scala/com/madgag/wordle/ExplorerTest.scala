@@ -1,7 +1,6 @@
 package com.madgag.wordle
 
 import com.madgag.wordle.GameMode.*
-import com.madgag.wordle.PossibleWords.allWordsFrom
 import com.madgag.wordle.approaches.tartan.AnalysisForCorpusWithGameMode
 import org.scalactic.{Equality, TolerantNumerics}
 import org.scalatest.EitherValues

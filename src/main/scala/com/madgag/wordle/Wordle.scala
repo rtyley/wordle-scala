@@ -11,7 +11,7 @@ import scala.concurrent.Future
 import scala.jdk.CollectionConverters.*
 
 type Word = String
-type WordId = Int
+type WordId = Short
 
 object Wordle {
   val WordLength = 5

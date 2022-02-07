@@ -63,7 +63,7 @@ class AnalysisForCorpusWithNormalMode(
   private def updateCandidatesWith(candidates: Candidates, possibleWordsThatRemainPossible: WordSet, possibleWordsThatBecameImpossible: WordSet) = {
     // if the `Candidates` for possibleWordsThatRemainPossible is already cached, return it (hard-mode, uh-oh?), skip next part
     val possibleDiscriminators =
-      Iterable.concat(possibleWordsThatBecameImpossible, candidates.discriminators) // we like these being in order, but don't *need* to do more than iterate over them
+      possibleWordsThatBecameImpossible.view ++ candidates.discriminators // we like these being in order, but don't *need* to do more than iterate over them
     // possibleWordsThatBecameImpossible ++ candidates.discriminators
     Candidates(
       possibleWords = possibleWordsThatRemainPossible,

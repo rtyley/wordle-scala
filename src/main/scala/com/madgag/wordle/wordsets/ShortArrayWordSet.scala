@@ -9,7 +9,7 @@ import scala.collection.immutable.SortedSet
 import scala.util.Sorting
 
 class ShortArrayWordSet(elems: Array[Short]) extends WordSet {
-  require(elems.length < 2 || elems.sliding(2).forall { a => a(0) <= a(1) })
+  // require(elems.length < 2 || elems.sliding(2).forall { a => a(0) <= a(1) })
 
   // Members declared in scala.collection.IterableOnce
   def iterator: Iterator[WordId] = elems.iterator
@@ -50,6 +50,12 @@ class ShortArrayWordSet(elems: Array[Short]) extends WordSet {
 
 object ShortArrayWordSet extends SpecificIterableFactory[WordId, WordSet] {
 
+  def fromKnownDistinct(it: IterableOnce[WordId]): WordSet = {
+    val array = it.iterator.toArray
+    java.util.Arrays.sort(array)
+    new ShortArrayWordSet(array)
+  }
+  
   // Members declared in scala.collection.Factory
   def fromSpecific(it: IterableOnce[WordId]): WordSet = it match {
     case ws: WordSet => ws
@@ -57,11 +63,14 @@ object ShortArrayWordSet extends SpecificIterableFactory[WordId, WordSet] {
       new ShortArrayWordSet(s match {
         case ss: SortedSet[WordId] => ss.toArray
         case _ =>
-          val a = s.toArray
-          java.util.Arrays.sort(a)
-          a
+          val array = s.toArray
+          java.util.Arrays.sort(array)
+          array
       })
-    case _ => new ShortArrayWordSet(SortedSet.from(it).toArray)
+    case _ =>
+      val array = it.iterator.distinct.toArray
+      java.util.Arrays.sort(array)
+      new ShortArrayWordSet(array)
   }
 
   // also declared in scala.collection.SpecificIterableFactory

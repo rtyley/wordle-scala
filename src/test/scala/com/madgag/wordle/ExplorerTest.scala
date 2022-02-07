@@ -82,7 +82,7 @@ class ExplorerTest extends AnyFlatSpec with Matchers with EitherValues {
     val c = Corpus.load()
     val corpusWithGameMode = c.withGameMode(Normal)
     
-    val explorer = Explorer(AnalysisForCorpusWithGameMode.obtainFor(corpusWithGameMode), SuccessValues.Prototype)
+    val explorer = Explorer(AnalysisForCorpusWithGameMode.obtainFor(corpusWithGameMode), SuccessValues(IndexedSeq(10,5,2)))
 
     val roateExpectedUtility = explorer.expectedUtility(0, c.idFor("roate"), c.initialCandidates)
     println(roateExpectedUtility)

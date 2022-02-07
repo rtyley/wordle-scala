@@ -4,7 +4,7 @@ import com.madgag.scala.collection.decorators.*
 import com.madgag.wordle.GameMode.*
 import com.madgag.wordle.WordFeedback.feedbackFor
 import com.madgag.wordle.*
-import com.madgag.wordle.wordsets.WordSet
+import com.madgag.wordle.wordsets.*
 
 import java.io.*
 import java.nio.file.Files
@@ -27,7 +27,7 @@ sealed trait AnalysisForCorpusWithGameMode(
   def wordsThatDoStillDiscriminate(
     possibleDiscriminators: Iterable[WordId], // Is it _best_ for it to be a WordSet?
     possibleWordsThatRemainPossible: WordSet
-  ): WordSet = if (possibleWordsThatRemainPossible.sizeIs <= 2) WordSet.empty else WordSet.fromSpecific(possibleDiscriminators.filter { wordId =>
+  ): WordSet = if (possibleWordsThatRemainPossible.sizeIs <= 2) WordSet.empty else ShortArrayWordSet.fromKnownDistinct(possibleDiscriminators.filter { wordId =>
     val gridEntryForWord = grid(wordId)
     val firstFeedback = gridEntryForWord(possibleWordsThatRemainPossible.head)
     // possibleWordsThatRemainPossible.view.tail.exists(gridEntryForWord(_) != firstFeedback)

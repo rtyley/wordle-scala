@@ -22,6 +22,7 @@ sealed trait AnalysisForCorpusWithGameMode(
   grid: Array[Array[Byte]]
 ) {
 
+  // The results of this are independent of guess-number, so may be a good candidate for caching?
   def possibleCandidateSetsIfCandidatePlayed(candidates: Candidates, playedCandidateId: WordId): Map[WordFeedback,Candidates]
 
   def wordsThatDoStillDiscriminate(

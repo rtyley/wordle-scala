@@ -30,11 +30,15 @@ case class Explorer(
       val possibleCandidateSets: Set[Candidates] =
         (analysisForCorpusWithGameMode.possibleCandidateSetsIfCandidatePlayed(candidates, candidateId) - WordFeedback.CompleteSuccess).values.toSet
 
-      if (nextGuessIsCertainSuccessGiven(possibleCandidateSets)) (numPossibleWords-numPossibilitiesOfImmediateSuccessWithGuess)*successValues(nextGuessIndex) else possibleCandidateSets.map { nextCandidates =>
-        nextCandidates.possibleWords.size *
-          nextCandidates.allWords.map(nextCandidateId => expectedUtility(nextGuessIndex, nextCandidateId, nextCandidates)).max
-      }.sum
+      if (nextGuessIsCertainSuccessGiven(possibleCandidateSets)) {
+        (numPossibleWords-numPossibilitiesOfImmediateSuccessWithGuess)*successValues(nextGuessIndex)
+      } else possibleCandidateSets.map(utilityOfBestCandidateOn(nextGuessIndex)).sum
     }) / numPossibleWords
+  }
+
+  private def utilityOfBestCandidateOn(guessIndex: Int)(candidates: Candidates) = {
+    candidates.possibleWords.size *
+      candidates.allWords.map(nextCandidateId => expectedUtility(guessIndex, nextCandidateId, candidates)).max
   }
 
   private def nextGuessIsCertainSuccessGiven(possibleCandidateSets: Set[Candidates]): Boolean =

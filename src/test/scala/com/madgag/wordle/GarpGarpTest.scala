@@ -15,5 +15,7 @@ class GarpGarpTest extends AnyFlatSpec with Matchers {
   it should "find the best candidate for a moderately large corpus in Normal mode" in {
     val best = garpGarp.f(0, c.initialCandidates)
     println(s"${c.allWordsOrdered(best.wordId)} ${best.guessSum} avg=${best.guessSum.toFloat/c.initialCandidates.possibleWords.size}")
+    println(garpGarp.newBestScoreCounter)
+    println(garpGarp.callsToFCounter)
   }
 }

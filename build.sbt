@@ -11,6 +11,7 @@ val circeVersion = "0.14.1"
 
 libraryDependencies ++= Seq(
   "com.madgag" %% "scala-collection-plus" % "0.11",
+  "org.typelevel" %% "cats-core" % "2.7.0",
   // "org.scala-lang.modules" %% "scala-parallel-collections" % "1.0.4",
   "com.google.guava" % "guava" % "31.0.1-jre",
   "com.lihaoyi" %% "fansi" % "0.3.0",

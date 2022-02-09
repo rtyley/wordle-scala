@@ -20,17 +20,26 @@ case class FResult(beta: Int, wordGuessSum: WordGuessSum)
 class GarpGarp(
   analysisForCorpusWithGameMode: AnalysisForCorpusWithGameMode
 ) {
-  case class PossCanSetsIfCanPlayed(t: WordId, possibleCandidates: Seq[Candidates]) {
-    val fastCandidatesSetHash: Int = possibleCandidates.hashCode // we rely on the hashcode a lot for `Set`s, so compute once...!
+  case class CandidatesPartition(possibleCandidates: Seq[Candidates]) {
 
-    val partitionEvennessScore: Int = possibleCandidates.map(c => c.possibleWords.size * c.possibleWords.size).sum
+    override val hashCode: Int = possibleCandidates.hashCode() // we rely on the hashcode a lot for `Set`s, so compute once...!
 
-    def findCandidateScoringBetterThan(thresholdToBeat: Int, nextGuessIndex: Int): Option[WordGuessSum] = possibleCandidates.foldM(0) {
-      case (acc, candidates) if thresholdToBeat > acc =>
-        Some(acc + f(nextGuessIndex, candidates, thresholdToBeat - acc).guessSum)
-      case _ => None
-    }.filter(_ < thresholdToBeat).map {
-      newBestScore => WordGuessSum(t, newBestScore)
+    val evennessScore: Int = possibleCandidates.map(c => c.possibleWords.size * c.possibleWords.size).sum
+
+    def findCandidateScoringBetterThan(thresholdToBeat: Int, nextGuessIndex: Int): Option[Int] = {
+      possibleCandidates.foldM(0) {
+        case (acc, candidates) if thresholdToBeat > acc =>
+          Some(acc + f(nextGuessIndex, candidates, thresholdToBeat - acc).guessSum)
+        case _ => None
+      }.filter(_ < thresholdToBeat)
+    }
+  }
+
+  case class PossCanSetsIfCanPlayed(t: WordId, candidatesPartition: CandidatesPartition) {
+    def findCandidateScoringBetterThan(thresholdToBeat: Int, nextGuessIndex: Int): Option[WordGuessSum] = {
+      candidatesPartition.findCandidateScoringBetterThan(thresholdToBeat).map {
+        newBestScore => WordGuessSum(t, newBestScore)
+      }
     }
   }
 
@@ -70,7 +79,7 @@ class GarpGarp(
 
         h.allWords.toSeq.map { t =>
           possibleCandidateSetsIfCandidatePlayed(h, t)
-        }.distinctBy(_.fastCandidatesSetHash).sortBy(_.partitionEvennessScore).foldLeft(WordGuessSum(-1, beta)) {
+        }.distinctBy(_.candidatesPartition.hashCode).sortBy(_.candidatesPartition.evennessScore).foldLeft(WordGuessSum(-1, beta)) {
           case (bestSoFar, possCanSetsIfCanPlayed) =>
             possCanSetsIfCanPlayed.findCandidateScoringBetterThan(bestSoFar.guessSum, nextGuessIndex).getOrElse(bestSoFar)
         }.addGuesses(h.possibleWords.size)
@@ -92,7 +101,9 @@ class GarpGarp(
       computeNewCandidateSetsCounter.increment()
       PossCanSetsIfCanPlayed(
         t,
-        (analysisForCorpusWithGameMode.possibleCandidateSetsIfCandidatePlayed(h, t) - WordFeedback.CompleteSuccess).values.toSeq.sortBy(_.possibleWords.size)
+        CandidatesPartition(
+          (analysisForCorpusWithGameMode.possibleCandidateSetsIfCandidatePlayed(h, t) - WordFeedback.CompleteSuccess).values.toSeq.sortBy(_.possibleWords.size)
+        )
       )
     })
   }

@@ -26,7 +26,9 @@ class GarpGarp(
 
     val evennessScore: Int = possibleCandidates.map(c => c.possibleWords.size * c.possibleWords.size).sum
 
-    def findCandidateScoringBetterThan(thresholdToBeat: Int, nextGuessIndex: Int): Option[Int] = {
+    // val borg: Seq[AtomicReference]
+
+    def findRequiredGuessesWithPerfectPlay(thresholdToBeat: Int, nextGuessIndex: Int): Option[Int] = {
       possibleCandidates.foldM(0) {
         case (acc, candidates) if thresholdToBeat > acc =>
           Some(acc + f(nextGuessIndex, candidates, thresholdToBeat - acc).guessSum)
@@ -37,7 +39,7 @@ class GarpGarp(
 
   case class PossCanSetsIfCanPlayed(t: WordId, candidatesPartition: CandidatesPartition) {
     def findCandidateScoringBetterThan(thresholdToBeat: Int, nextGuessIndex: Int): Option[WordGuessSum] = {
-      candidatesPartition.findCandidateScoringBetterThan(thresholdToBeat).map {
+      candidatesPartition.findRequiredGuessesWithPerfectPlay(thresholdToBeat, nextGuessIndex).map {
         newBestScore => WordGuessSum(t, newBestScore)
       }
     }

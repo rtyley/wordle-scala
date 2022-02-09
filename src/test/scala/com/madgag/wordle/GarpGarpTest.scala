@@ -9,7 +9,7 @@ import org.scalatest.matchers.should.Matchers
 
 class GarpGarpTest extends AnyFlatSpec with Matchers {
 
-  val c = Corpus.load().reduceByAFactorOf(70)
+  val c = Corpus.load().reduceByAFactorOf(64)
   val garpGarp = new GarpGarp(AnalysisForCorpusWithGameMode.obtainFor(c.withGameMode(Normal)))
 
   it should "find the best candidate for a moderately large corpus in Normal mode" in {

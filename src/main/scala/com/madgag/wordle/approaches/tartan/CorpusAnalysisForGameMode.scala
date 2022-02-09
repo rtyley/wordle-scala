@@ -28,7 +28,7 @@ sealed trait AnalysisForCorpusWithGameMode(
   def wordsThatDoStillDiscriminate(
     possibleDiscriminators: Iterable[WordId], // Is it _best_ for it to be a WordSet?
     possibleWordsThatRemainPossible: WordSet
-  ): WordSet = if (possibleWordsThatRemainPossible.sizeIs <= 2) WordSet.empty else ShortArrayWordSet.fromKnownDistinct(possibleDiscriminators.filter { wordId =>
+  ): WordSet = if (possibleWordsThatRemainPossible.sizeIs <= 2) WordSet.empty else WordSet.fromKnownDistinct(possibleDiscriminators.filter { wordId =>
     val gridEntryForWord = grid(wordId)
     val firstFeedback = gridEntryForWord(possibleWordsThatRemainPossible.head)
     // possibleWordsThatRemainPossible.view.tail.exists(gridEntryForWord(_) != firstFeedback)

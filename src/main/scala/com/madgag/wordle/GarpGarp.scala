@@ -6,7 +6,7 @@ import cats.implicits.*
 import com.madgag.wordle.approaches.tartan.{AnalysisForCorpusWithGameMode, Candidates}
 
 import java.util.concurrent.atomic.LongAdder
-import GarpGarp._
+import GarpGarp.*
 
 case class WordGuessSum(wordId: WordId, guessSum: Int) extends Ordered[WordGuessSum] {
   override def compare(that: WordGuessSum): Int = guessSum.compareTo(that.guessSum)
@@ -28,7 +28,7 @@ class GarpGarp(
   val callsToFCounter = new LongAdder()
 
 
-
+  // Change to return Option?
   def f(guessIndex: Int, h: Candidates, beta: Int = 1000000): WordGuessSum = if (guessIndex>=6) WordGuessSum(-1,0) else {
     callsToFCounter.increment()
     val numPossibleWords = h.possibleWords.size
@@ -38,8 +38,8 @@ class GarpGarp(
       case 2 => WordGuessSum(h.possibleWords.head,3)
       case _ => {
         val candidatesWithPartitionMostPromisingFirst: Seq[(Set[Candidates], WordId)] = h.allWords.toSeq.map { t =>
-          (analysisForCorpusWithGameMode.possibleCandidateSetsIfCandidatePlayed(h, t) - WordFeedback.CompleteSuccess).values.toSet -> t
-        }.toMap.toSeq.sortBy(p => promiseOfCandidateSets(p._1))
+          possibleCandidateSetsIfCandidatePlayed(h, t) -> t
+        }.distinctBy(_._1).sortBy(p => promiseOfCandidateSets(p._1))
 
         val nextGuessIndex = guessIndex + 1
         val optimised = candidatesWithPartitionMostPromisingFirst.foldLeft(WordGuessSum(-1,beta)) { case (bestSoFar, (possibleCandidateSets, t)) =>
@@ -67,4 +67,24 @@ class GarpGarp(
       }
     }
   }
+
+  val candidateSetsByInput: java.util.concurrent.ConcurrentMap[(WordId, Candidates),Set[Candidates]] =
+    new java.util.concurrent.ConcurrentHashMap()
+
+  val newCandidateSetsRequestedCounter = new LongAdder
+  val computeNewCandidateSetsCounter = new LongAdder
+
+  private def possibleCandidateSetsIfCandidatePlayed(h: Candidates, t: WordId): Set[Candidates] = {
+    val key = (t, h)
+    newCandidateSetsRequestedCounter.increment()
+
+    candidateSetsByInput.computeIfAbsent(key, { _ =>
+      computeNewCandidateSetsCounter.increment()
+      (analysisForCorpusWithGameMode.possibleCandidateSetsIfCandidatePlayed(h, t) - WordFeedback.CompleteSuccess).values.toSet
+    })
+
+//    (analysisForCorpusWithGameMode.possibleCandidateSetsIfCandidatePlayed(h, t) - WordFeedback.CompleteSuccess).values.toSet
+  }
 }
+
+// case class PossCanSetsIfCanPlayed(t: WordId, possibleCandidates: Set[Candidates] )

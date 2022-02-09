@@ -28,8 +28,8 @@ case class Corpus(commonWords: SortedSet[Word], uncommonWords: SortedSet[Word]) 
   val id: String = s"corpus-${commonWords.size}-of-${allWordsOrdered.size}-words__${hash.toHexString.toUpperCase}"
 
   val initialCandidates: Candidates = Candidates(
-    possibleWords = ShortArrayWordSet.fromSpecific((0 until commonWords.size).map(_.toShort)),
-    discriminators = ShortArrayWordSet.fromSpecific((commonWords.size until allWordsOrdered.size).map(_.toShort))
+    possibleWords = WordSet.fromSpecific((0 until commonWords.size).map(_.toShort)),
+    discriminators = WordSet.fromSpecific((commonWords.size until allWordsOrdered.size).map(_.toShort))
   )
 
   def withGameMode(gameMode: GameMode): CorpusWithGameMode = CorpusWithGameMode(this, gameMode)

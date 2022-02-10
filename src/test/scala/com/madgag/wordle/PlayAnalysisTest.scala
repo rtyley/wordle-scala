@@ -1,36 +1,34 @@
 package com.madgag.wordle
 
+import com.madgag.wordle.Corpus.fromAsteriskFormat
 import com.madgag.wordle.GameMode.Normal
-import com.madgag.wordle.approaches.tartan.{AnalysisForCorpusWithGameMode, Candidates}
+import com.madgag.wordle.PlayAnalysis.forGameMode
+import com.madgag.wordle.approaches.tartan.{Candidates, FeedbackTable}
 import org.scalactic.{Equality, TolerantNumerics}
 import org.scalatest.EitherValues
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-class GarpGarpTest extends AnyFlatSpec with Matchers {
-
-  it should "give the correct answer, 4 word corpus" in {
-    val c = Corpus.fromAsteriskFormat(Seq("aback*", "defer*", "gully*", "angry"))
-    val garpGarp = new GarpGarp(AnalysisForCorpusWithGameMode.obtainFor(c.withGameMode(Normal)))
-    garpGarp.bestInitial shouldBe WordGuessSum(c.idFor("angry"), 6)
-  }
+class PlayAnalysisTest extends AnyFlatSpec with Matchers {
 
   it should "give the correct answer, 1 word corpus" in {
-    val c = Corpus.fromAsteriskFormat(Seq("aback*"))
-    val garpGarp = new GarpGarp(AnalysisForCorpusWithGameMode.obtainFor(c.withGameMode(Normal)))
-    garpGarp.bestInitial shouldBe WordGuessSum(c.idFor("aback"), 1)
+    given Corpus = fromAsteriskFormat("aback*")
+    forGameMode(Normal).bestInitial shouldBe WordGuessSum("aback".id, 1)
+  }
+
+  it should "give the correct answer, 3/4 word corpus" in {
+    given Corpus = fromAsteriskFormat("aback*", "defer*", "gully*", "angry")
+    forGameMode(Normal).bestInitial shouldBe WordGuessSum("angry".id, 6)
   }
 
   it should "give the correct answer, 2 word corpus" in {
-    val c = Corpus.fromAsteriskFormat(Seq("aback*", "apple*"))
-    val garpGarp = new GarpGarp(AnalysisForCorpusWithGameMode.obtainFor(c.withGameMode(Normal)))
-    garpGarp.bestInitial.guessSum shouldBe 3
+    given Corpus = fromAsteriskFormat("aback*", "apple*")
+    forGameMode(Normal).bestInitial.guessSum shouldBe 3
   }
-  
+
   it should "give the correct answer, for a quick check on 1% of the full corpus!" in {
-    val c = Corpus.Full.reduceByAFactorOf(100)
-    val garpGarp = new GarpGarp(AnalysisForCorpusWithGameMode.obtainFor(c.withGameMode(Normal)))
-    garpGarp.bestInitial shouldBe WordGuessSum(c.idFor("laris"), 50)
+    given Corpus = Corpus.Full.reducedByAFactorOf(100)
+    forGameMode(Normal).bestInitial shouldBe WordGuessSum("laris".id, 50)
   }
 
 //  it should "find the best candidate for a moderately large corpus in Normal mode" in {

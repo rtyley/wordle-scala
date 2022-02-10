@@ -39,7 +39,7 @@ case class Corpus(commonWords: SortedSet[Word], uncommonWords: SortedSet[Word]) 
   def pickRandomTargetWord(): Word = commonWordsOrdered(Random.nextInt(commonWordsOrdered.size))
 
 
-  def reduceByAFactorOf(factor: Int): Corpus = {
+  def reducedByAFactorOf(factor: Int): Corpus = {
     def winnow(words: SortedSet[Word]):SortedSet[Word] =
       SortedSet.from(words.zipWithIndex.collect {case (e,i) if (i % factor) == 0 => e})
     
@@ -48,15 +48,17 @@ case class Corpus(commonWords: SortedSet[Word], uncommonWords: SortedSet[Word]) 
 }
 
 object Corpus {
-  def fromAsteriskFormat(wordsWithAsterisk: Iterable[String]): Corpus = {
+
+
+  def fromAsteriskFormat(wordsWithAsterisk: String*): Corpus = {
     val (popularWords, unpopularWords) = wordsWithAsterisk.partition(_.endsWith("*"))
     Corpus(SortedSet.from(popularWords.map(_.stripSuffix("*"))), SortedSet.from(unpopularWords))
   }
 
   def load(): Corpus = Corpus.fromAsteriskFormat(
-    Resources.asCharSource(getClass.getResource("/wordle-five-letter-words.txt"), UTF_8).readLines().asScala
+    Resources.asCharSource(getClass.getResource("/wordle-five-letter-words.txt"), UTF_8).readLines().asScala.toSeq*
   )
-  
+
   lazy val Full: Corpus = load()
 }
 

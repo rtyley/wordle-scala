@@ -15,7 +15,7 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 import scala.util.Using
 
-sealed trait AnalysisForCorpusWithGameMode(
+sealed trait FeedbackTable(
   val corpus: Corpus,
   val gameMode: GameMode,
   grid: Array[Array[Byte]]
@@ -37,7 +37,7 @@ sealed trait AnalysisForCorpusWithGameMode(
 class AnalysisForCorpusWithNormalMode(
   corpus: Corpus,
   grid: Array[Array[Byte]]
-) extends AnalysisForCorpusWithGameMode(corpus, Normal, grid) {
+) extends FeedbackTable(corpus, Normal, grid) {
 
   def possibleWordSetsOnCandidate(candidates: Candidates, playedCandidateId: WordId): Map[Byte, WordSet] = {
     val gridEntryForWord = grid(playedCandidateId)
@@ -81,7 +81,7 @@ class AnalysisForCorpusWithNormalMode(
 class AnalysisForCorpusWithHardMode(
   corpus: Corpus,
   grid: Array[Array[Byte]]
-) extends AnalysisForCorpusWithGameMode(corpus, Hard, grid) {
+) extends FeedbackTable(corpus, Hard, grid) {
 
   /**
    * HARD MODE: Trim both possible words & discriminators to comply with feedback
@@ -97,8 +97,8 @@ class AnalysisForCorpusWithHardMode(
   }
 }
 
-object AnalysisForCorpusWithGameMode {
-  def obtainFor(corpusWithGameMode: CorpusWithGameMode): AnalysisForCorpusWithGameMode = {
+object FeedbackTable {
+  def obtainFor(corpusWithGameMode: CorpusWithGameMode): FeedbackTable = {
     val corpus = corpusWithGameMode.corpus
     val grid: Array[Array[Byte]] = LocalFileCache.obtain(corpusWithGameMode.storageDir.resolve("grid.gz")) {
       for {

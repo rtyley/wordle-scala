@@ -3,7 +3,7 @@ package com.madgag.wordle
 import cats.*
 import cats.data.*
 import cats.implicits.*
-import com.madgag.wordle.approaches.tartan.{AnalysisForCorpusWithGameMode, Candidates}
+import com.madgag.wordle.approaches.tartan.{FeedbackTable, Candidates}
 
 import java.util.concurrent.atomic.LongAdder
 
@@ -16,9 +16,13 @@ case class WordGuessSum(wordId: WordId, guessSum: Int) extends Ordered[WordGuess
 case class FParams(guessIndex: Int, h: Candidates)
 case class FResult(beta: Int, wordGuessSum: WordGuessSum)
 
+object PlayAnalysis {
+  def forGameMode(gameMode: GameMode)(using c: Corpus): PlayAnalysis =
+    new PlayAnalysis(FeedbackTable.obtainFor(CorpusWithGameMode(c, gameMode)))
+}
 
-class GarpGarp(
-  analysisForCorpusWithGameMode: AnalysisForCorpusWithGameMode
+class PlayAnalysis(
+  feedbackTable: FeedbackTable
 ) {
   case class CandidatesPartition(possibleCandidates: Seq[Candidates]) {
 
@@ -51,8 +55,8 @@ class GarpGarp(
   val fResultsByFParams: java.util.concurrent.ConcurrentMap[FParams,FResult] =
     new java.util.concurrent.ConcurrentHashMap()
 
-  lazy val bestInitial: WordGuessSum = f(0, analysisForCorpusWithGameMode.corpus.initialCandidates)
-  
+  lazy val bestInitial: WordGuessSum = f(0, feedbackTable.corpus.initialCandidates)
+
   /**
    *
    * @param beta only pursue results that are better (lower) than this threshold - results that >= to this threshold
@@ -108,7 +112,7 @@ class GarpGarp(
       PossCanSetsIfCanPlayed(
         t,
         CandidatesPartition(
-          (analysisForCorpusWithGameMode.possibleCandidateSetsIfCandidatePlayed(h, t) - WordFeedback.CompleteSuccess).values.toSeq.sortBy(_.possibleWords.size)
+          (feedbackTable.possibleCandidateSetsIfCandidatePlayed(h, t) - WordFeedback.CompleteSuccess).values.toSeq.sortBy(_.possibleWords.size)
         )
       )
     })

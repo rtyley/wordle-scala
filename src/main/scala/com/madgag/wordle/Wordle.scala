@@ -13,6 +13,9 @@ import scala.jdk.CollectionConverters.*
 type Word = String
 type WordId = Short
 
+extension (word: Word)
+  def id(using c: Corpus): WordId = c.idFor(word)
+
 object Wordle {
   val WordLength = 5
   val WordIndices: Seq[Int] = 0 until WordLength

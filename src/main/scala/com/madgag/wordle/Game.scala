@@ -7,7 +7,7 @@ import scala.collection.immutable.SortedSet
 case class Game(targetWord: Word, corpusWithGameMode: CorpusWithGameMode) {
   val corpus: Corpus = corpusWithGameMode.corpus
 
-  val analysis = AnalysisForCorpusWithGameMode.obtainFor(corpusWithGameMode)
+  val analysis = FeedbackTable.obtainFor(corpusWithGameMode)
 
   val targetWordId = corpusWithGameMode.corpus.idFor(targetWord)
 

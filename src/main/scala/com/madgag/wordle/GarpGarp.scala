@@ -79,19 +79,22 @@ class GarpGarp(
         val fParams = FParams(guessIndex, h)
         val nextGuessIndex = guessIndex + 1
 
-        fResultsByFParams.compute(fParams, {
-          case (key, oldRes) =>
-            Option(oldRes).filter(oldRes => oldRes.beta > beta || oldRes.wordGuessSum.guessSum < beta).getOrElse {
-              FResult(
-                beta,
-        h.allWords.toSeq.map { t =>
-          possibleCandidateSetsIfCandidatePlayed(h, t)
-        }.distinctBy(_.fastCandidatesSetHash).sortBy(_.partitionEvennessScore).foldLeft(WordGuessSum(-1, beta)) {
-          case (bestSoFar, possCanSetsIfCanPlayed) =>
-            possCanSetsIfCanPlayed.findCandidateScoringBetterThan(bestSoFar.guessSum, nextGuessIndex).getOrElse(bestSoFar)
-        }.addGuesses(h.possibleWords.size)
+        Option(fResultsByFParams.get(fParams)).filter(oldRes => oldRes.beta > beta || oldRes.wordGuessSum.guessSum < beta).getOrElse {
+          val newResult: WordGuessSum = h.allWords.toSeq.map { t =>
+            possibleCandidateSetsIfCandidatePlayed(h, t)
+          }.distinctBy(_.fastCandidatesSetHash).sortBy(_.partitionEvennessScore).foldLeft(WordGuessSum(-1, beta)) {
+            case (bestSoFar, possCanSetsIfCanPlayed) =>
+              possCanSetsIfCanPlayed.findCandidateScoringBetterThan(bestSoFar.guessSum, nextGuessIndex).getOrElse(bestSoFar)
+          }.addGuesses(h.possibleWords.size)
+
+          val rrr = FResult(beta, newResult)
+          fResultsByFParams.merge(fParams, rrr, {
+            case (_, currentResult) =>
+              Option(currentResult).filter(_.beta > beta).getOrElse(rrr)
+          })
+        }.wordGuessSum
       }
-    }).wordGuessSum
+    }
   }
 
   val candidateSetsByInput: java.util.concurrent.ConcurrentMap[(WordId, Candidates),PossCanSetsIfCanPlayed] =

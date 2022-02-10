@@ -62,8 +62,8 @@ class GarpGarp(
     val numPossibleWords = h.possibleWords.size
     numPossibleWords match {
       case 0 => throw new IllegalStateException("Can't be!")
-      case 1 => WordGuessSum(h.possibleWords.head,1)
-      case 2 => WordGuessSum(h.possibleWords.head,3)
+      case 1 => WordGuessSum(h.possibleWords.head, 1)
+      case 2 => WordGuessSum(h.possibleWords.head, 3)
       case _ => {
         // Hit cache for FParams
         // If miss - calculate the stuff, store it

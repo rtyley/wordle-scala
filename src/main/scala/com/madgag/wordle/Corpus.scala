@@ -56,6 +56,8 @@ object Corpus {
   def load(): Corpus = Corpus.fromAsteriskFormat(
     Resources.asCharSource(getClass.getResource("/wordle-five-letter-words.txt"), UTF_8).readLines().asScala
   )
+  
+  lazy val Full: Corpus = load()
 }
 
 case class SetRequirement(setSize: Int, maxQuantity: Int)

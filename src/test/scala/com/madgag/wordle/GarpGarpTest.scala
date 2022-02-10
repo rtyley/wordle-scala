@@ -9,21 +9,35 @@ import org.scalatest.matchers.should.Matchers
 
 class GarpGarpTest extends AnyFlatSpec with Matchers {
 
-  private val fullCorpus: Corpus = Corpus.load()
-  val c = fullCorpus.reduceByAFactorOf(64)
-  val garpGarp = new GarpGarp(AnalysisForCorpusWithGameMode.obtainFor(c.withGameMode(Normal)))
-
-  it should "give the correct answer, for a quick check on 1% of the full corpus!" in {
-    val c = fullCorpus.reduceByAFactorOf(100)
+  it should "give the correct answer, 4 word corpus" in {
+    val c = Corpus.fromAsteriskFormat(Seq("aback*", "defer*", "gully*", "angry"))
     val garpGarp = new GarpGarp(AnalysisForCorpusWithGameMode.obtainFor(c.withGameMode(Normal)))
-    garpGarp.f(0, c.initialCandidates) shouldBe WordGuessSum(c.idFor("laris"), 50)
+    garpGarp.bestInitial shouldBe WordGuessSum(c.idFor("angry"), 6)
+  }
+
+  it should "give the correct answer, 1 word corpus" in {
+    val c = Corpus.fromAsteriskFormat(Seq("aback*"))
+    val garpGarp = new GarpGarp(AnalysisForCorpusWithGameMode.obtainFor(c.withGameMode(Normal)))
+    garpGarp.bestInitial shouldBe WordGuessSum(c.idFor("aback"), 1)
+  }
+
+  it should "give the correct answer, 2 word corpus" in {
+    val c = Corpus.fromAsteriskFormat(Seq("aback*", "apple*"))
+    val garpGarp = new GarpGarp(AnalysisForCorpusWithGameMode.obtainFor(c.withGameMode(Normal)))
+    garpGarp.bestInitial.guessSum shouldBe 3
+  }
+  
+  it should "give the correct answer, for a quick check on 1% of the full corpus!" in {
+    val c = Corpus.Full.reduceByAFactorOf(100)
+    val garpGarp = new GarpGarp(AnalysisForCorpusWithGameMode.obtainFor(c.withGameMode(Normal)))
+    garpGarp.bestInitial shouldBe WordGuessSum(c.idFor("laris"), 50)
   }
 
 //  it should "find the best candidate for a moderately large corpus in Normal mode" in {
 //    val c = fullCorpus.reduceByAFactorOf(64)
 //    val garpGarp = new GarpGarp(AnalysisForCorpusWithGameMode.obtainFor(c.withGameMode(Normal)))
 //
-//    val best = garpGarp.f(0, c.initialCandidates)
+//    val best = garpGarp.bestInitial
 //    println(s"${c.allWordsOrdered(best.wordId)} ${best.guessSum} avg=${best.guessSum.toFloat/c.initialCandidates.possibleWords.size}")
 //    println(garpGarp.newBestScoreCounter)
 //    println(garpGarp.callsToFCounter)

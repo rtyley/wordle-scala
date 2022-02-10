@@ -51,6 +51,8 @@ class GarpGarp(
   val fResultsByFParams: java.util.concurrent.ConcurrentMap[FParams,FResult] =
     new java.util.concurrent.ConcurrentHashMap()
 
+  lazy val bestInitial: WordGuessSum = f(0, analysisForCorpusWithGameMode.corpus.initialCandidates)
+  
   /**
    *
    * @param beta only pursue results that are better (lower) than this threshold - results that >= to this threshold

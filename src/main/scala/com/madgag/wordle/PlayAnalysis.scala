@@ -41,7 +41,7 @@ class PlayAnalysis(
     }
   }
 
-  case class PossCanSetsIfCanPlayed(t: WordId, candidatesPartition: CandidatesPartition) {
+  case class CandidateOutlook(t: WordId, candidatesPartition: CandidatesPartition) {
     def findCandidateScoringBetterThan(thresholdToBeat: Int, nextGuessIndex: Int): Option[WordGuessSum] = {
       candidatesPartition.findRequiredGuessesWithPerfectPlay(thresholdToBeat, nextGuessIndex).map {
         newBestScore => WordGuessSum(t, newBestScore)
@@ -85,31 +85,31 @@ class PlayAnalysis(
         val fParams = FParams(guessIndex, h)
         val nextGuessIndex = guessIndex + 1
 
-        val potentialCandidates: Seq[PossCanSetsIfCanPlayed] = h.allWords.toSeq.map { t =>
-          possibleCandidateSetsIfCandidatePlayed(h, t)
+        val candidateOutlooks: Seq[CandidateOutlook] = h.allWords.toSeq.map { t =>
+          outlookIfCandidatePlayed(h, t)
         }.distinctBy(_.candidatesPartition.hashCode).sortBy(_.candidatesPartition.evennessScore)
 
-        potentialCandidates.foldLeft(WordGuessSum(-1, beta)) {
-          case (bestSoFar, possCanSetsIfCanPlayed) =>
-            possCanSetsIfCanPlayed.findCandidateScoringBetterThan(bestSoFar.guessSum, nextGuessIndex).getOrElse(bestSoFar)
+        candidateOutlooks.foldLeft(WordGuessSum(-1, beta)) {
+          case (bestSoFar, candidateOutlook) =>
+            candidateOutlook.findCandidateScoringBetterThan(bestSoFar.guessSum, nextGuessIndex).getOrElse(bestSoFar)
         }.addGuesses(h.possibleWords.size)
       }
     }
   }
 
-  val candidateSetsByInput: java.util.concurrent.ConcurrentMap[(WordId, Candidates),PossCanSetsIfCanPlayed] =
+  val candidateSetsByInput: java.util.concurrent.ConcurrentMap[(WordId, Candidates),CandidateOutlook] =
     new java.util.concurrent.ConcurrentHashMap()
 
   val newCandidateSetsRequestedCounter = new LongAdder
   val computeNewCandidateSetsCounter = new LongAdder
 
-  private def possibleCandidateSetsIfCandidatePlayed(h: Candidates, t: WordId): PossCanSetsIfCanPlayed = {
+  private def outlookIfCandidatePlayed(h: Candidates, t: WordId): CandidateOutlook = {
     val key = (t, h)
     newCandidateSetsRequestedCounter.increment()
 
     candidateSetsByInput.computeIfAbsent(key, { _ =>
       computeNewCandidateSetsCounter.increment()
-      PossCanSetsIfCanPlayed(
+      CandidateOutlook(
         t,
         CandidatesPartition(
           (feedbackTable.possibleCandidateSetsIfCandidatePlayed(h, t) - WordFeedback.CompleteSuccess).values.toSeq.sortBy(_.possibleWords.size)

@@ -77,23 +77,4 @@ class ExplorerTest extends AnyFlatSpec with Matchers with EitherValues {
 //    println(bestWordId)
 //    bestWordId
   }
-
-  it should "find the best candidate for a moderately large corpus in HARD mode" in {
-    val c = Corpus.load().reduceByAFactorOf(22)
-    val explorer = Explorer(AnalysisForCorpusWithGameMode.obtainFor(c.withGameMode(Hard)), SuccessValues(IndexedSeq(30,20,10,5,2,1)))
-
-    println(c.allWordsOrdered(explorer.bestCandidate(0, c.initialCandidates)))
-    println(explorer.euCounter)
-    println(explorer.bcCounter)
-  }
-
-  it should "find the best candidate for a moderately large corpus in Normal mode" in {
-    val c = Corpus.load().reduceByAFactorOf(22)
-    val explorer = Explorer(AnalysisForCorpusWithGameMode.obtainFor(c.withGameMode(Normal)), SuccessValues(IndexedSeq(30,20,10)))
-
-    println(c.allWordsOrdered(explorer.bestCandidate(0, c.initialCandidates)))
-    println(explorer.euCounter)
-    println(explorer.bcCounter)
-  }
-
 }

@@ -11,6 +11,12 @@ case class WordGuessSum(wordId: WordId, guessSum: Int) extends Ordered[WordGuess
   override def compare(that: WordGuessSum): Int = guessSum.compareTo(that.guessSum)
 
   def addGuesses(x: Int) = copy(guessSum = guessSum + x)
+
+  def word(using c: Corpus): Word = c.allWordsOrdered(wordId)
+
+  def summary(using c: Corpus): String =
+    s"$word $guessSum avg=${guessSum.toFloat/c.initialCandidates.possibleWords.size}"
+
 }
 
 case class FParams(guessIndex: Int, h: Candidates)

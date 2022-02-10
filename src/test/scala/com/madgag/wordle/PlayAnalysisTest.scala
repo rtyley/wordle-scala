@@ -31,16 +31,19 @@ class PlayAnalysisTest extends AnyFlatSpec with Matchers {
     forGameMode(Normal).bestInitial shouldBe WordGuessSum("laris".id, 50)
   }
 
-//  it should "find the best candidate for a moderately large corpus in Normal mode" in {
-//    val c = fullCorpus.reduceByAFactorOf(64)
-//    val garpGarp = new GarpGarp(AnalysisForCorpusWithGameMode.obtainFor(c.withGameMode(Normal)))
-//
-//    val best = garpGarp.bestInitial
-//    println(s"${c.allWordsOrdered(best.wordId)} ${best.guessSum} avg=${best.guessSum.toFloat/c.initialCandidates.possibleWords.size}")
-//    println(garpGarp.newBestScoreCounter)
-//    println(garpGarp.callsToFCounter)
-//    println(s"${garpGarp.candidateSetsByInput.size} / ${garpGarp.computeNewCandidateSetsCounter} - requests=${garpGarp.newCandidateSetsRequestedCounter}")
-//    println(Candidates.creationCounter)
-//    println(Candidates.all.size) // Only 1971!?!
-//  }
+  it should "give the correct answer, for a sub-half-minute perf check" in {
+    given Corpus = Full.reducedByAFactorOf(80)
+
+    val playAnalysis = forGameMode(Normal)
+    val best = playAnalysis.bestInitial
+
+    println(best.summary)
+
+    println(playAnalysis.callsToFCounter)
+    println(playAnalysis.newBestScoreCounter)
+    println(s"${playAnalysis.candidateSetsByInput.size} / ${playAnalysis.computeNewCandidateSetsCounter} - requests=${playAnalysis.newCandidateSetsRequestedCounter}")
+    println(Candidates.creationCounter)
+    println(Candidates.all.size) // Only 1971!?!
+  }
+
 }

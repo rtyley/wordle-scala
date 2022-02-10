@@ -79,9 +79,11 @@ class GarpGarp(
         val fParams = FParams(guessIndex, h)
         val nextGuessIndex = guessIndex + 1
 
-        h.allWords.toSeq.map { t =>
+        val potentialCandidates: Seq[PossCanSetsIfCanPlayed] = h.allWords.toSeq.map { t =>
           possibleCandidateSetsIfCandidatePlayed(h, t)
-        }.distinctBy(_.candidatesPartition.hashCode).sortBy(_.candidatesPartition.evennessScore).foldLeft(WordGuessSum(-1, beta)) {
+        }.distinctBy(_.candidatesPartition.hashCode).sortBy(_.candidatesPartition.evennessScore)
+
+        potentialCandidates.foldLeft(WordGuessSum(-1, beta)) {
           case (bestSoFar, possCanSetsIfCanPlayed) =>
             possCanSetsIfCanPlayed.findCandidateScoringBetterThan(bestSoFar.guessSum, nextGuessIndex).getOrElse(bestSoFar)
         }.addGuesses(h.possibleWords.size)

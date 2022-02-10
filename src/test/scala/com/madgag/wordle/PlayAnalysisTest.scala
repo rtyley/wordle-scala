@@ -1,6 +1,6 @@
 package com.madgag.wordle
 
-import com.madgag.wordle.Corpus.fromAsteriskFormat
+import com.madgag.wordle.Corpus.{Full, fromAsteriskFormat}
 import com.madgag.wordle.GameMode.Normal
 import com.madgag.wordle.PlayAnalysis.forGameMode
 import com.madgag.wordle.approaches.tartan.{Candidates, FeedbackTable}
@@ -16,18 +16,18 @@ class PlayAnalysisTest extends AnyFlatSpec with Matchers {
     forGameMode(Normal).bestInitial shouldBe WordGuessSum("aback".id, 1)
   }
 
-  it should "give the correct answer, 3/4 word corpus" in {
-    given Corpus = fromAsteriskFormat("aback*", "defer*", "gully*", "angry")
-    forGameMode(Normal).bestInitial shouldBe WordGuessSum("angry".id, 6)
-  }
-
   it should "give the correct answer, 2 word corpus" in {
     given Corpus = fromAsteriskFormat("aback*", "apple*")
     forGameMode(Normal).bestInitial.guessSum shouldBe 3
   }
 
+  it should "give the correct answer, 3/4 word corpus" in {
+    given Corpus = fromAsteriskFormat("aback*", "defer*", "gully*", "angry")
+    forGameMode(Normal).bestInitial shouldBe WordGuessSum("angry".id, 6)
+  }
+
   it should "give the correct answer, for a quick check on 1% of the full corpus!" in {
-    given Corpus = Corpus.Full.reducedByAFactorOf(100)
+    given Corpus = Full.reducedByAFactorOf(100)
     forGameMode(Normal).bestInitial shouldBe WordGuessSum("laris".id, 50)
   }
 

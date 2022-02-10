@@ -5,7 +5,7 @@ import com.madgag.wordle.approaches.tartan.*
 import scala.collection.immutable.SortedSet
 
 case class Game(targetWord: Word, corpusWithGameMode: CorpusWithGameMode) {
-  val corpus = corpusWithGameMode.corpus
+  val corpus: Corpus = corpusWithGameMode.corpus
 
   val analysis = AnalysisForCorpusWithGameMode.obtainFor(corpusWithGameMode)
 

@@ -41,6 +41,8 @@ class PlayAnalysis(
   object CandidatesPartition {
     private val candidatesPartitionBySet: java.util.concurrent.ConcurrentMap[Set[Candidates],CandidatesPartition] =
       new java.util.concurrent.ConcurrentHashMap()
+      
+    def stored: Int = candidatesPartitionBySet.size()
     
     def intern(possibleCandidates: Set[Candidates]): CandidatesPartition = 
       candidatesPartitionBySet.computeIfAbsent(possibleCandidates, { _ => CandidatesPartition(possibleCandidates) })

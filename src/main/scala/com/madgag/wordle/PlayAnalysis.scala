@@ -3,9 +3,9 @@ package com.madgag.wordle
 import cats.*
 import cats.data.*
 import cats.implicits.*
-import com.madgag.wordle.approaches.tartan.{FeedbackTable, Candidates}
+import com.madgag.wordle.approaches.tartan.{Candidates, FeedbackTable}
 
-import java.util.concurrent.atomic.LongAdder
+import java.util.concurrent.atomic.{AtomicLong, AtomicReference, LongAdder}
 
 case class WordGuessSum(wordId: WordId, guessSum: Int) extends Ordered[WordGuessSum] {
   override def compare(that: WordGuessSum): Int = guessSum.compareTo(that.guessSum)
@@ -29,6 +29,8 @@ case class FResult(beta: Int, wordGuessSum: WordGuessSum)
 object PlayAnalysis {
   def forGameMode(gameMode: GameMode)(using c: Corpus): PlayAnalysis =
     new PlayAnalysis(FeedbackTable.obtainFor(CorpusWithGameMode(c, gameMode)))
+
+  case class CandidatesPartitionPlayCache(thresholdToBeat: Int, guessSum: Option[Int])
 }
 
 class PlayAnalysis(
@@ -42,14 +44,46 @@ class PlayAnalysis(
 
     val evennessScore: Int = possibleCandidates.map(c => c.possibleWords.size * c.possibleWords.size).sum
 
-    // val borg: Seq[AtomicReference]
+    val borg: Seq[AtomicReference[PlayAnalysis.CandidatesPartitionPlayCache]] =
+      Seq.fill(MaxGuesses)(new AtomicReference(PlayAnalysis.CandidatesPartitionPlayCache(0, None)))
 
+    val calledCounter = new LongAdder
+    val cacheHitCounter = new LongAdder
     def findRequiredGuessesWithPerfectPlay(thresholdToBeat: Int, nextGuessIndex: Int): Option[Int] = {
-      possibleCandidates.foldM(0) {
+      calledCounter.increment()
+//      val numTimesCalled = atomicLong.incrementAndGet()
+//      if (numTimesCalled>MaxGuesses) {
+//        println(s"numTimesCalled=$numTimesCalled")
+//      }
+      // Given a guess index, can we return a cached answer?
+      // if we cached with a higher thresholdToBeat, we can answer with the cached answer
+      // otherwise we must calculate and store
+//      val atomicRef: AtomicReference[PlayAnalysis.CandidatesPartitionPlayCache] = borg(nextGuessIndex)
+//      val cachedValue: PlayAnalysis.CandidatesPartitionPlayCache = atomicRef.get
+//      if (cachedValue.thresholdToBeat>thresholdToBeat) {
+//        cacheHitCounter.increment()
+////        if (cacheHitCounter.intValue()>5) {
+////          println(s"$cacheHitCounter/$calledCounter")
+////        }
+//        cachedValue.guessSum
+//      } else {
+
+        val newGuessSum = calculateRequiredGuesses(thresholdToBeat, nextGuessIndex)
+        newGuessSum
+
+//        atomicRef.updateAndGet { oldCachedValue =>
+//          if (thresholdToBeat > oldCachedValue.thresholdToBeat) PlayAnalysis.CandidatesPartitionPlayCache(thresholdToBeat,newGuessSum) else oldCachedValue
+//        }.guessSum
+//      }
+    }
+
+    private def calculateRequiredGuesses(thresholdToBeat: Int, nextGuessIndex: Int) = {
+      val newGuessSum = possibleCandidates.foldM(0) {
         case (acc, candidates) if thresholdToBeat > acc =>
           Some(acc + f(nextGuessIndex, candidates, thresholdToBeat - acc).guessSum)
         case _ => None
       }.filter(_ < thresholdToBeat)
+      newGuessSum
     }
   }
 
@@ -73,42 +107,46 @@ class PlayAnalysis(
    *
    * @param beta only pursue results that are better (lower) than this threshold - results that >= to this threshold
    *             are useless.
-   * @return accurate result, if one could be found below the beta threshold
+   * @return accurate result, if one could be found below the beta threshold, for the best word with it's guess-sum
    */
-  def f(guessIndex: Int, h: Candidates, beta: Int = 1000000): WordGuessSum = if (guessIndex>=6) WordGuessSum(-1,1000000) else {
-    callsToFCounter.increment()
+  def f(guessIndex: Int, h: Candidates, beta: Int = 1000000): WordGuessSum = {
     val numPossibleWords = h.possibleWords.size
-    numPossibleWords match {
-      case 0 => throw new IllegalStateException("Can't be!")
-      case 1 => WordGuessSum(h.possibleWords.head,1)
-      case 2 => WordGuessSum(h.possibleWords.head,3)
-      case _ => {
-        // Hit cache for FParams
-        // If miss - calculate the stuff, store it
-        // if hit - can we use the calculated data? YES if:
-        // OLD-beta > NEW-beta --
-        //   ie, we searched really hard, and permitted some really bad answers which you should now feel free to discard,
-        //
-        // or... old-result < NEW-beta
-        // typically old-result (if found) < OLD-beta
-        // if OLD-beta < NEW-beta, that doesn't mean that we can't use old-result, so long as it's < NEW-beta
-        // if old-result > NEW-beta (a failed-to-find solution), surely we can still use old-result so long as OLD-beta > NEW-beta
+    if (guessIndex>=MaxGuesses || (guessIndex==MaxGuesses-1 && numPossibleWords>1)) WordGuessSum(-1,1000000) else {
+      callsToFCounter.increment()
+      numPossibleWords match {
+        case 0 => throw new IllegalStateException("Can't be!")
+        case 1 => WordGuessSum(h.possibleWords.head,1)
+        case 2 => WordGuessSum(h.possibleWords.head,3)
+        case _ => {
+          // Hit cache for FParams
+          // If miss - calculate the stuff, store it
+          // if hit - can we use the calculated data? YES if:
+          // OLD-beta > NEW-beta --
+          //   ie, we searched really hard, and permitted some really bad answers which you should now feel free to discard,
+          //
+          // or... old-result < NEW-beta
+          // typically old-result (if found) < OLD-beta
+          // if OLD-beta < NEW-beta, that doesn't mean that we can't use old-result, so long as it's < NEW-beta
+          // if old-result > NEW-beta (a failed-to-find solution), surely we can still use old-result so long as OLD-beta > NEW-beta
+          // if we searched with a HIGH-beta, we must keep that cached, and not replace it with the new-beta...
 
-        val fParams = FParams(guessIndex, h)
-        val nextGuessIndex = guessIndex + 1
 
-        val candidateOutlooks: Seq[CandidateOutlook] = h.allWords.toSeq.map { t =>
-          outlookIfCandidatePlayed(h, t)
-        }.distinctBy(_.candidatesPartition.hashCode).sortBy(_.candidatesPartition.evennessScore)
+          val fParams = FParams(guessIndex, h)
+          val nextGuessIndex = guessIndex + 1
 
-        candidateOutlooks.foldLeft(WordGuessSum(-1, beta)) {
-          case (bestSoFar, candidateOutlook) =>
-            val maybeSum = candidateOutlook.findCandidateScoringBetterThan(bestSoFar.guessSum, nextGuessIndex)
-            if (guessIndex <= 1 ) {
-              println(s"$guessIndex. ${candidateOutlook.t.asWord} $maybeSum - ${bestSoFar.summary}")
-            }
-            maybeSum.getOrElse(bestSoFar)
-        }.addGuesses(h.possibleWords.size)
+          val candidateOutlooks: Seq[CandidateOutlook] = h.allWords.toSeq.map { t =>
+            outlookIfCandidatePlayed(h, t)
+          }.distinctBy(_.candidatesPartition.hashCode).sortBy(_.candidatesPartition.evennessScore)
+
+          candidateOutlooks.foldLeft(WordGuessSum(-1, beta)) {
+            case (bestSoFar, candidateOutlook) =>
+              val maybeSum = candidateOutlook.findCandidateScoringBetterThan(bestSoFar.guessSum, nextGuessIndex)
+              //            if (guessIndex <= 1 ) {
+              //              println(s"$guessIndex. ${candidateOutlook.t.asWord} $maybeSum - ${bestSoFar.summary}")
+              //            }
+              maybeSum.getOrElse(bestSoFar)
+          }.addGuesses(h.possibleWords.size)
+        }
       }
     }
   }

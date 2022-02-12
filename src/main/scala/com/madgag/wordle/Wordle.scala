@@ -12,6 +12,7 @@ import scala.jdk.CollectionConverters.*
 
 type Word = String
 type WordId = Short
+val MaxGuesses = 6
 
 extension (word: Word)
   def id(using c: Corpus): WordId = c.idFor(word)

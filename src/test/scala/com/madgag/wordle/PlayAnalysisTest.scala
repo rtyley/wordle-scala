@@ -32,7 +32,7 @@ class PlayAnalysisTest extends AnyFlatSpec with Matchers {
   }
 
   it should "give the correct answer, for a sub-half-minute perf check" in {
-    given Corpus = Full.reducedByAFactorOf(10)
+    given Corpus = Full.reducedByAFactorOf(64)
 
     val playAnalysis = forGameMode(Normal)
     val best = playAnalysis.bestInitial

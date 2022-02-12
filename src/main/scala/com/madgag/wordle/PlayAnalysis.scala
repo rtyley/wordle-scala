@@ -5,6 +5,7 @@ import cats.data.*
 import cats.implicits.*
 import com.madgag.wordle.approaches.tartan.{Candidates, FeedbackTable}
 
+import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.{AtomicLong, AtomicReference, LongAdder}
 
 case class WordGuessSum(wordId: WordId, guessSum: Int) extends Ordered[WordGuessSum] {
@@ -39,7 +40,7 @@ class PlayAnalysis(
   given Corpus = feedbackTable.corpus
 
   object CandidatesPartition {
-    private val candidatesPartitionBySet: java.util.concurrent.ConcurrentMap[Set[Candidates],CandidatesPartition] =
+    private val candidatesPartitionBySet: ConcurrentMap[Set[Candidates],CandidatesPartition] =
       new java.util.concurrent.ConcurrentHashMap()
       
     def stored: Int = candidatesPartitionBySet.size()
@@ -90,7 +91,7 @@ class PlayAnalysis(
   val newBestScoreCounter = new LongAdder()
   val callsToFCounter = new LongAdder()
 
-  val fResultsByFParams: java.util.concurrent.ConcurrentMap[FParams,FResult] =
+  val fResultsByFParams: ConcurrentMap[FParams,FResult] =
     new java.util.concurrent.ConcurrentHashMap()
 
   lazy val bestInitial: WordGuessSum = f(0, feedbackTable.corpus.initialCandidates)
@@ -143,14 +144,13 @@ class PlayAnalysis(
     }
   }
 
-  val candidateSetsByInput: java.util.concurrent.ConcurrentMap[(WordId, Candidates),CandidateOutlook] =
-    new java.util.concurrent.ConcurrentHashMap()
+  val candidateSetsByInput: ConcurrentMap[Long,CandidateOutlook] = new java.util.concurrent.ConcurrentHashMap()
 
   val newCandidateSetsRequestedCounter = new LongAdder
   val computeNewCandidateSetsCounter = new LongAdder
 
   private def outlookIfCandidatePlayed(h: Candidates, t: WordId): CandidateOutlook = {
-    val key = (t, h) // Need quick key, eg: val key: Long = (t<<32) + h.hashCode
+    val key: Long = (t<<32) + h.id
     newCandidateSetsRequestedCounter.increment()
 
     candidateSetsByInput.computeIfAbsent(key, { _ =>

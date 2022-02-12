@@ -20,7 +20,10 @@ case class WordGuessSum(wordId: WordId, guessSum: Int) extends Ordered[WordGuess
     } else "*nothing found yet*"
 
   }
+}
 
+object WordGuessSum {
+  val TotalFailure = WordGuessSum(-1,1000000)
 }
 
 case class FParams(guessIndex: Int, h: Candidates)
@@ -73,7 +76,7 @@ class PlayAnalysis(
     }
 
     private def calculateRequiredGuesses(thresholdToBeat: Int, nextGuessIndex: Int) = possibleCandidatesOrdered.foldM(0) {
-      case (acc, candidates) if thresholdToBeat > acc =>
+      case (acc, candidates) if acc < thresholdToBeat =>
         Some(acc + f(nextGuessIndex, candidates, thresholdToBeat - acc).guessSum)
       case _ => None
     }.filter(_ < thresholdToBeat)
@@ -96,14 +99,14 @@ class PlayAnalysis(
   lazy val bestInitial: WordGuessSum = f(0, feedbackTable.corpus.initialCandidates)
 
   /**
-   *
    * @param beta only pursue results that are better (lower) than this threshold - results that >= to this threshold
    *             are useless.
    * @return accurate result, if one could be found below the beta threshold, for the best word with it's guess-sum
    */
   def f(guessIndex: Int, h: Candidates, beta: Int = 1000000): WordGuessSum = {
     val numPossibleWords = h.possibleWords.size
-    if (guessIndex>=MaxGuesses || (guessIndex==MaxGuesses-1 && numPossibleWords>1)) WordGuessSum(-1,1000000) else {
+    val nextGuessIndex = guessIndex + 1
+    if (guessIndex>=MaxGuesses || (nextGuessIndex==MaxGuesses && numPossibleWords>1)) WordGuessSum.TotalFailure else {
       callsToFCounter.increment()
       numPossibleWords match {
         case 0 => throw new IllegalStateException("Can't be!")
@@ -124,24 +127,32 @@ class PlayAnalysis(
 
 
           val fParams = FParams(guessIndex, h)
-          val nextGuessIndex = guessIndex + 1
 
-          val candidateOutlooks: Seq[CandidateOutlook] = h.allWords.toSeq.map { t =>
-            outlookIfCandidatePlayed(h, t)
-          }.distinctBy(_.candidatesPartition.hashCode).sortBy(_.candidatesPartition.evennessScore)
+          Option(fResultsByFParams.get(fParams)).filter(_.beta > beta).getOrElse {
+            val candidateOutlooks: Seq[CandidateOutlook] = candidateOutlooksFor(h)
 
-          candidateOutlooks.foldLeft(WordGuessSum(-1, beta)) {
-            case (bestSoFar, candidateOutlook) =>
-              val maybeSum = candidateOutlook.findCandidateScoringBetterThan(bestSoFar.guessSum, nextGuessIndex)
-              //            if (guessIndex <= 1 ) {
-              //              println(s"$guessIndex. ${candidateOutlook.t.asWord} $maybeSum - ${bestSoFar.summary}")
-              //            }
-              maybeSum.getOrElse(bestSoFar)
-          }.addGuesses(h.possibleWords.size)
+            val newWordGuessSum: WordGuessSum = candidateOutlooks.foldLeft(WordGuessSum(-1, beta)) {
+              case (bestSoFar, candidateOutlook) =>
+                val maybeSum = candidateOutlook.findCandidateScoringBetterThan(bestSoFar.guessSum, nextGuessIndex)
+                //            if (guessIndex <= 1 ) {
+                //              println(s"$guessIndex. ${candidateOutlook.t.asWord} $maybeSum - ${bestSoFar.summary}")
+                //            }
+                maybeSum.getOrElse(bestSoFar)
+            }.addGuesses(h.possibleWords.size)
+
+            fResultsByFParams.merge(fParams, FResult(beta, newWordGuessSum), {
+              case (a,b) => if (a.beta>b.beta) a else b
+            })
+          }.wordGuessSum
+
         }
       }
     }
   }
+
+  private def candidateOutlooksFor(h: Candidates): Seq[CandidateOutlook] = h.allWords.toSeq.map { t =>
+    outlookIfCandidatePlayed(h, t)
+  }.distinctBy(_.candidatesPartition.hashCode).sortBy(_.candidatesPartition.evennessScore)
 
   val candidateSetsByInput: java.util.concurrent.ConcurrentMap[(WordId, Candidates),CandidateOutlook] =
     new java.util.concurrent.ConcurrentHashMap()

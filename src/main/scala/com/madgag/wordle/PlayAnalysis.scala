@@ -38,7 +38,8 @@ class PlayAnalysis(
 ) {
   given Corpus = feedbackTable.corpus
 
-  case class CandidatesPartition(possibleCandidates: Seq[Candidates]) {
+  case class CandidatesPartition(possibleCandidates: Set[Candidates]) {
+    val possibleCandidatesOrdered =  possibleCandidates.toSeq.sortBy(_.possibleWords.size)
 
     override val hashCode: Int = possibleCandidates.hashCode() // we rely on the hashcode a lot for `Set`s, so compute once...!
 
@@ -65,7 +66,7 @@ class PlayAnalysis(
       }
     }
 
-    private def calculateRequiredGuesses(thresholdToBeat: Int, nextGuessIndex: Int) = possibleCandidates.foldM(0) {
+    private def calculateRequiredGuesses(thresholdToBeat: Int, nextGuessIndex: Int) = possibleCandidatesOrdered.foldM(0) {
       case (acc, candidates) if thresholdToBeat > acc =>
         Some(acc + f(nextGuessIndex, candidates, thresholdToBeat - acc).guessSum)
       case _ => None
@@ -143,7 +144,7 @@ class PlayAnalysis(
   val computeNewCandidateSetsCounter = new LongAdder
 
   private def outlookIfCandidatePlayed(h: Candidates, t: WordId): CandidateOutlook = {
-    val key = (t, h)
+    val key = (t, h) // Need quick key, eg: val key: Long = (t<<32) + h.hashCode
     newCandidateSetsRequestedCounter.increment()
 
     candidateSetsByInput.computeIfAbsent(key, { _ =>
@@ -151,7 +152,7 @@ class PlayAnalysis(
       CandidateOutlook(
         t,
         CandidatesPartition(
-          (feedbackTable.possibleCandidateSetsIfCandidatePlayed(h, t) - WordFeedback.CompleteSuccess).values.toSeq.sortBy(_.possibleWords.size)
+          (feedbackTable.possibleCandidateSetsIfCandidatePlayed(h, t) - WordFeedback.CompleteSuccess).values.toSet
         )
       )
     })

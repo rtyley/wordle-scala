@@ -28,7 +28,7 @@ class PlayAnalysisTest extends AnyFlatSpec with Matchers {
 
   it should "give the correct answer, for a quick check on 1% of the full corpus!" in {
     given Corpus = Full.reducedByAFactorOf(100)
-    forGameMode(Normal).bestInitial shouldBe WordGuessSum("laris".id, 50)
+    forGameMode(Normal).bestInitial.guessSum shouldBe 50
   }
 
   it should "give the correct answer, for a sub-half-minute perf check" in {

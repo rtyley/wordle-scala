@@ -51,40 +51,32 @@ class PlayAnalysis(
     val cacheHitCounter = new LongAdder
     def findRequiredGuessesWithPerfectPlay(thresholdToBeat: Int, nextGuessIndex: Int): Option[Int] = {
       calledCounter.increment()
-//      val numTimesCalled = atomicLong.incrementAndGet()
-//      if (numTimesCalled>MaxGuesses) {
-//        println(s"numTimesCalled=$numTimesCalled")
-//      }
-      // Given a guess index, can we return a cached answer?
-      // if we cached with a higher thresholdToBeat, we can answer with the cached answer
-      // otherwise we must calculate and store
-//      val atomicRef: AtomicReference[PlayAnalysis.CandidatesPartitionPlayCache] = borg(nextGuessIndex)
-//      val cachedValue: PlayAnalysis.CandidatesPartitionPlayCache = atomicRef.get
-//      if (cachedValue.thresholdToBeat>thresholdToBeat) {
-//        cacheHitCounter.increment()
-////        if (cacheHitCounter.intValue()>5) {
-////          println(s"$cacheHitCounter/$calledCounter")
-////        }
-//        cachedValue.guessSum
-//      } else {
+//       Given a guess index, can we return a cached answer?
+//       if we cached with a higher thresholdToBeat, we can answer with the cached answer
+//       otherwise we must calculate and store
+      val atomicRef: AtomicReference[PlayAnalysis.CandidatesPartitionPlayCache] = borg(nextGuessIndex)
+      val cachedValue: PlayAnalysis.CandidatesPartitionPlayCache = atomicRef.get
+      if (cachedValue.thresholdToBeat>thresholdToBeat) {
+        cacheHitCounter.increment()
+//        if (cacheHitCounter.intValue()>5) {
+//          println(s"$cacheHitCounter/$calledCounter")
+//        }
+        cachedValue.guessSum
+      } else {
 
         val newGuessSum = calculateRequiredGuesses(thresholdToBeat, nextGuessIndex)
-        newGuessSum
 
-//        atomicRef.updateAndGet { oldCachedValue =>
-//          if (thresholdToBeat > oldCachedValue.thresholdToBeat) PlayAnalysis.CandidatesPartitionPlayCache(thresholdToBeat,newGuessSum) else oldCachedValue
-//        }.guessSum
-//      }
+        atomicRef.updateAndGet { oldCachedValue =>
+          if (thresholdToBeat > oldCachedValue.thresholdToBeat) PlayAnalysis.CandidatesPartitionPlayCache(thresholdToBeat,newGuessSum) else oldCachedValue
+        }.guessSum
+      }
     }
 
-    private def calculateRequiredGuesses(thresholdToBeat: Int, nextGuessIndex: Int) = {
-      val newGuessSum = possibleCandidates.foldM(0) {
-        case (acc, candidates) if thresholdToBeat > acc =>
-          Some(acc + f(nextGuessIndex, candidates, thresholdToBeat - acc).guessSum)
-        case _ => None
-      }.filter(_ < thresholdToBeat)
-      newGuessSum
-    }
+    private def calculateRequiredGuesses(thresholdToBeat: Int, nextGuessIndex: Int) = possibleCandidates.foldM(0) {
+      case (acc, candidates) if thresholdToBeat > acc =>
+        Some(acc + f(nextGuessIndex, candidates, thresholdToBeat - acc).guessSum)
+      case _ => None
+    }.filter(_ < thresholdToBeat)
   }
 
   case class CandidateOutlook(t: WordId, candidatesPartition: CandidatesPartition) {

@@ -77,6 +77,9 @@ class PlayAnalysis(
 
     private def calculateRequiredGuesses(thresholdToBeat: Int, nextGuessIndex: Int) = possibleCandidatesOrdered.foldM(0) {
       case (acc, candidates) if acc < thresholdToBeat =>
+        // At this point, we should check the F cache to see what results are easily available - add up all of those
+        // first to get a good deduction off our thresholdToBeat before we start trying to actually calculate anything
+        // new...
         Some(acc + f(nextGuessIndex, candidates, thresholdToBeat - acc).guessSum)
       case _ => None
     }.filter(_ < thresholdToBeat)

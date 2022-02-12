@@ -54,12 +54,8 @@ class PlayAnalysis(
 //       otherwise we must calculate and store
       val atomicRef: AtomicReference[PlayAnalysis.CandidatesPartitionPlayCache] = borg(nextGuessIndex)
       val cachedValue: PlayAnalysis.CandidatesPartitionPlayCache = atomicRef.get
-      if (cachedValue.thresholdToBeat>thresholdToBeat) {
-        cachedValue.guessSum
-      } else {
-
+      if (cachedValue.thresholdToBeat>thresholdToBeat) cachedValue.guessSum else {
         val newGuessSum = calculateRequiredGuesses(thresholdToBeat, nextGuessIndex)
-
         atomicRef.updateAndGet { oldCachedValue =>
           if (thresholdToBeat > oldCachedValue.thresholdToBeat) PlayAnalysis.CandidatesPartitionPlayCache(thresholdToBeat,newGuessSum) else oldCachedValue
         }.guessSum

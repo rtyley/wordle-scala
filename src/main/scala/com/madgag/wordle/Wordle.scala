@@ -16,6 +16,9 @@ type WordId = Short
 extension (word: Word)
   def id(using c: Corpus): WordId = c.idFor(word)
 
+extension (wordId: WordId)
+  def asWord(using c: Corpus): Word = c.allWordsOrdered(wordId)
+
 object Wordle {
   val WordLength = 5
   val WordIndices: Seq[Int] = 0 until WordLength

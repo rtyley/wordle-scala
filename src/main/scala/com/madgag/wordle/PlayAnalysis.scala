@@ -12,10 +12,14 @@ case class WordGuessSum(wordId: WordId, guessSum: Int) extends Ordered[WordGuess
 
   def addGuesses(x: Int) = copy(guessSum = guessSum + x)
 
-  def word(using c: Corpus): Word = c.allWordsOrdered(wordId)
+  def word(using c: Corpus): Word = wordId.asWord
 
-  def summary(using c: Corpus): String =
-    s"$word $guessSum avg=${guessSum.toFloat/c.initialCandidates.possibleWords.size}"
+  def summary(using c: Corpus): String = {
+    if (wordId>0) {
+      s"$word $guessSum avg=${guessSum.toFloat/c.initialCandidates.possibleWords.size}"
+    } else "*nothing found yet*"
+
+  }
 
 }
 
@@ -30,6 +34,8 @@ object PlayAnalysis {
 class PlayAnalysis(
   feedbackTable: FeedbackTable
 ) {
+  given Corpus = feedbackTable.corpus
+
   case class CandidatesPartition(possibleCandidates: Seq[Candidates]) {
 
     override val hashCode: Int = possibleCandidates.hashCode() // we rely on the hashcode a lot for `Set`s, so compute once...!
@@ -97,7 +103,11 @@ class PlayAnalysis(
 
         candidateOutlooks.foldLeft(WordGuessSum(-1, beta)) {
           case (bestSoFar, candidateOutlook) =>
-            candidateOutlook.findCandidateScoringBetterThan(bestSoFar.guessSum, nextGuessIndex).getOrElse(bestSoFar)
+            val maybeSum = candidateOutlook.findCandidateScoringBetterThan(bestSoFar.guessSum, nextGuessIndex)
+            if (guessIndex <= 1 ) {
+              println(s"$guessIndex. ${candidateOutlook.t.asWord} $maybeSum - ${bestSoFar.summary}")
+            }
+            maybeSum.getOrElse(bestSoFar)
         }.addGuesses(h.possibleWords.size)
       }
     }

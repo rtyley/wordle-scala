@@ -47,20 +47,13 @@ class PlayAnalysis(
     val borg: Seq[AtomicReference[PlayAnalysis.CandidatesPartitionPlayCache]] =
       Seq.fill(MaxGuesses)(new AtomicReference(PlayAnalysis.CandidatesPartitionPlayCache(0, None)))
 
-    val calledCounter = new LongAdder
-    val cacheHitCounter = new LongAdder
     def findRequiredGuessesWithPerfectPlay(thresholdToBeat: Int, nextGuessIndex: Int): Option[Int] = {
-      calledCounter.increment()
 //       Given a guess index, can we return a cached answer?
 //       if we cached with a higher thresholdToBeat, we can answer with the cached answer
 //       otherwise we must calculate and store
       val atomicRef: AtomicReference[PlayAnalysis.CandidatesPartitionPlayCache] = borg(nextGuessIndex)
       val cachedValue: PlayAnalysis.CandidatesPartitionPlayCache = atomicRef.get
       if (cachedValue.thresholdToBeat>thresholdToBeat) {
-        cacheHitCounter.increment()
-//        if (cacheHitCounter.intValue()>5) {
-//          println(s"$cacheHitCounter/$calledCounter")
-//        }
         cachedValue.guessSum
       } else {
 

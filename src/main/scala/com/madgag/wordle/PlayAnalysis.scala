@@ -45,14 +45,14 @@ class PlayAnalysis(
 
     val evennessScore: Int = possibleCandidates.map(c => c.possibleWords.size * c.possibleWords.size).sum
 
-    val borg: Seq[AtomicReference[PlayAnalysis.CandidatesPartitionPlayCache]] =
+    val calculationCache: Seq[AtomicReference[PlayAnalysis.CandidatesPartitionPlayCache]] =
       Seq.fill(MaxGuesses)(new AtomicReference(PlayAnalysis.CandidatesPartitionPlayCache(0, None)))
 
     def findRequiredGuessesWithPerfectPlay(thresholdToBeat: Int, nextGuessIndex: Int): Option[Int] = {
 //       Given a guess index, can we return a cached answer?
 //       if we cached with a higher thresholdToBeat, we can answer with the cached answer
 //       otherwise we must calculate and store
-      val atomicRef: AtomicReference[PlayAnalysis.CandidatesPartitionPlayCache] = borg(nextGuessIndex)
+      val atomicRef: AtomicReference[PlayAnalysis.CandidatesPartitionPlayCache] = calculationCache(nextGuessIndex)
       val cachedValue: PlayAnalysis.CandidatesPartitionPlayCache = atomicRef.get
       if (cachedValue.thresholdToBeat>thresholdToBeat) cachedValue.guessSum else {
         val newGuessSum = calculateRequiredGuesses(thresholdToBeat, nextGuessIndex)

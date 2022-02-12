@@ -38,6 +38,14 @@ class PlayAnalysis(
 ) {
   given Corpus = feedbackTable.corpus
 
+  object CandidatesPartition {
+    private val candidatesPartitionBySet: java.util.concurrent.ConcurrentMap[Set[Candidates],CandidatesPartition] =
+      new java.util.concurrent.ConcurrentHashMap()
+    
+    def intern(possibleCandidates: Set[Candidates]): CandidatesPartition = 
+      candidatesPartitionBySet.computeIfAbsent(possibleCandidates, { _ => CandidatesPartition(possibleCandidates) })
+  }
+  
   case class CandidatesPartition(possibleCandidates: Set[Candidates]) {
     val possibleCandidatesOrdered =  possibleCandidates.toSeq.sortBy(_.possibleWords.size)
 
@@ -147,7 +155,7 @@ class PlayAnalysis(
       computeNewCandidateSetsCounter.increment()
       CandidateOutlook(
         t,
-        CandidatesPartition(
+        CandidatesPartition.intern(
           (feedbackTable.possibleCandidateSetsIfCandidatePlayed(h, t) - WordFeedback.CompleteSuccess).values.toSet
         )
       )

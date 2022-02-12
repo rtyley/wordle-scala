@@ -44,7 +44,7 @@ class PlayAnalysisTest extends AnyFlatSpec with Matchers {
     println(playAnalysis.newBestScoreCounter)
     println(s"${playAnalysis.candidateSetsByInput.size} / ${playAnalysis.computeNewCandidateSetsCounter} - requests=${playAnalysis.newCandidateSetsRequestedCounter}")
     println(Candidates.creationCounter)
-    println(Candidates.all.size) // Only 1971!?!
+    println(Candidates.stored) // Only 1971!?!
   }
 
 }

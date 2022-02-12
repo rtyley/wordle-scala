@@ -4,23 +4,38 @@ import scala.collection.immutable.SortedSet
 import com.madgag.wordle.*
 import com.madgag.wordle.wordsets.WordSet
 
-import java.util.concurrent.atomic.LongAdder
+import java.util.concurrent.atomic.{AtomicInteger, AtomicLong, LongAdder}
 import scala.math.Ordering
 
 object Candidates {
-  val creationCounter = new LongAdder
-  val all: scala.collection.mutable.Set[Candidates] = scala.collection.mutable.Set()
+  val creationCounter = new AtomicInteger()
+  private val all: scala.collection.mutable.Set[Candidates] = scala.collection.mutable.Set()
+
+  private val candidatesByTuple: java.util.concurrent.ConcurrentMap[(WordSet,WordSet),Candidates] =
+    new java.util.concurrent.ConcurrentHashMap()
+
+  def stored: Int = candidatesByTuple.size()
+
+  def apply(possibleWords: WordSet, discriminators: WordSet): Candidates = {
+    candidatesByTuple.computeIfAbsent((possibleWords, discriminators), { _ =>
+      new Candidates(creationCounter.getAndIncrement(), possibleWords, discriminators)
+    })
+  }
 }
 
-case class Candidates(
-  possibleWords: WordSet,
-  discriminators: WordSet
+class Candidates private(
+  val id: Int,
+  val possibleWords: WordSet,
+  val discriminators: WordSet
 ) {
-  Candidates.creationCounter.increment()
-  Candidates.all.addOne(this)
-
-
   def contains(word: WordId) = possibleWords.contains(word) || discriminators.contains(word)
 
   def allWords: Iterable[WordId] = possibleWords.view ++ discriminators
+
+  override def hashCode(): Int = id
+
+  override def equals(that: Any): Boolean = that match {
+    case c: Candidates if c.id == id => true
+    case _ => super.equals(that)
+  }
 }

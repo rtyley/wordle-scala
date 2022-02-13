@@ -51,9 +51,30 @@ class PlayAnalysisTest extends AnyFlatSpec with Matchers with OptionValues {
     forGameMode(Normal).bestInitial.value shouldBe WordGuessSum("scrag".id, 24) // agrees with sonorous-chocolate
   }
 
+  it should "match sonorous-chocolate for 1/150th corpus" in {
+    given c: Corpus = Full.reducedByAFactorOf(150)
+    forGameMode(Normal).bestInitial.value shouldBe WordGuessSum("sayer".id, 32) // agrees with sonorous-chocolate
+  }
+
   it should "match sonorous-chocolate for 1/100th corpus" in {
     given c: Corpus = Full.reducedByAFactorOf(100)
     forGameMode(Normal).bestInitial.value.guessSum shouldBe 50 // agrees with sonorous-chocolate
+  }
+
+  it should "match sonorous-chocolate for 1/90th corpus" in {
+    given c: Corpus = Full.reducedByAFactorOf(90)
+    c.writeOut()
+    val boo = forGameMode(Normal).bestInitial.value
+    println(boo.summary)
+    boo shouldBe WordGuessSum("therm".id, 58) // should agree with sonorous-chocolate, surely?!
+  }
+
+  it should "match sonorous-chocolate for 1/80th corpus" in {
+    given c: Corpus = Full.reducedByAFactorOf(80)
+    c.writeOut()
+    val boo = forGameMode(Normal).bestInitial.value
+    println(boo.summary)
+    boo.guessSum shouldBe 66 // should agree with sonorous-chocolate, surely?!
   }
 
   it should "match sonorous-chocolate for 1/50th corpus" in {

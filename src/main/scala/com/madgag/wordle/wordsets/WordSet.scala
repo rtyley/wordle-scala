@@ -39,10 +39,10 @@ abstract class WordSet
 
   override val hashCode: Int = super.hashCode() // we rely on the hashcode a lot for `Set`s etc
 
-  override def equals(that: Any): Boolean = that match {
-    case w: WordSet if w.hashCode == hashCode && w.size == w.size => true // TODO Hack much?
-    case _ => super.equals(that)
-  }
+//  override def equals(that: Any): Boolean = that match {
+//    case w: WordSet if w.hashCode == hashCode && w.size == w.size => true // TODO Hack much?
+//    case _ => super.equals(that)
+//  }
 }
 
 object WordSet extends SpecificIterableFactory[WordId, WordSet] {

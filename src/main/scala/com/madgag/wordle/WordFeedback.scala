@@ -24,6 +24,11 @@ object WordFeedback {
   val numValues: Int = LetterFeedback.values.length
   val CompleteSuccess: WordFeedback = WordFeedback(Seq.fill(WordLength)(Correct))
 
+  def fromChars(str: String): WordFeedback = {
+    require(str.length==WordLength)
+    apply(str.map(LetterFeedback.fromCharacter))
+  }
+  
   def apply(emojiString: String): WordFeedback = {
     def feedbackOnString(str: String): List[LetterFeedback] = if (str.isEmpty) Nil else {
       val lf = LetterFeedback.atStartOfString(str)

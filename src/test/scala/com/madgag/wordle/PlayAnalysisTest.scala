@@ -41,8 +41,15 @@ class PlayAnalysisTest extends AnyFlatSpec with Matchers with OptionValues {
     forGameMode(Normal).bestInitial.value.guessSum shouldBe 50
   }
 
+  it should "give the correct answer, for a quick check on 2% of the full corpus!" in {
+    given Corpus = Full.reducedByAFactorOf(50)
+    val wordGuessSum: WordGuessSum = forGameMode(Normal).bestInitial.value
+    println(wordGuessSum.summary)
+    wordGuessSum.guessSum shouldBe 102
+  }
+
   it should "give the correct answer, for a sub-half-minute perf check" in {
-    given Corpus = Full.reducedByAFactorOf(49)
+    given Corpus = Full.reducedByAFactorOf(38)
 
     val playAnalysis = forGameMode(Normal)
     val best = playAnalysis.bestInitial.value

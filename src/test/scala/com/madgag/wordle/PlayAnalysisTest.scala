@@ -13,39 +13,39 @@ class PlayAnalysisTest extends AnyFlatSpec with Matchers with OptionValues {
 
   it should "give the correct answer, 1 word corpus" in {
     given Corpus = fromAsteriskFormat("aback*")
-    forGameMode(Normal).bestInitial shouldBe WordGuessSum("aback".id, 1)
+    forGameMode(Normal).bestInitial.value shouldBe WordGuessSum("aback".id, 1)
   }
 
   it should "give the correct answer, 2 word corpus" in {
     given Corpus = fromAsteriskFormat("aback*", "apple*")
-    forGameMode(Normal).bestInitial.guessSum shouldBe 3
+    forGameMode(Normal).bestInitial.value.guessSum shouldBe 3
   }
 
   it should "give the correct answer, 3/4 word corpus" in {
     given Corpus = fromAsteriskFormat("aback*", "defer*", "gully*", "angry")
-    forGameMode(Normal).bestInitial shouldBe WordGuessSum("angry".id, 6)
+    forGameMode(Normal).bestInitial.value shouldBe WordGuessSum("angry".id, 6)
   }
 
   it should "acknowledge when the best strategy is just simple guessing" in {
     given Corpus = fromAsteriskFormat("eight*", "fight*", "sight*", "might*","night*", "right*")
-    forGameMode(Normal).bestInitial.guessSum shouldBe 21
+    forGameMode(Normal).bestInitial.value.guessSum shouldBe 21
   }
 
   it should "acknowledge when everything is hopeless" in {
     given Corpus = fromAsteriskFormat("eight*", "fight*", "sight*", "might*","night*", "right*", "light*")
-    forGameMode(Normal).bestInitial.wordId  > 0 shouldBe false // maybe should be TotalFailure?
+    forGameMode(Normal).bestInitial.exists(_.wordId>0) shouldBe false // maybe should be TotalFailure?
   }
 
   it should "give the correct answer, for a quick check on 1% of the full corpus!" in {
     given Corpus = Full.reducedByAFactorOf(100)
-    forGameMode(Normal).bestInitial.guessSum shouldBe 50
+    forGameMode(Normal).bestInitial.value.guessSum shouldBe 50
   }
 
   it should "give the correct answer, for a sub-half-minute perf check" in {
     given Corpus = Full.reducedByAFactorOf(49)
 
     val playAnalysis = forGameMode(Normal)
-    val best = playAnalysis.bestInitial
+    val best = playAnalysis.bestInitial.value
 
     println(best.summary)
 

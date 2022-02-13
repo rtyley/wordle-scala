@@ -85,7 +85,7 @@ class PlayAnalysisTest extends AnyFlatSpec with Matchers with OptionValues {
     boo.guessSum shouldBe 106 // should agree with sonorous-chocolate, surely?!
   }
 
-  it should "give the correct answer, for a sub-half-minute perf check" in {
+  it should "do a sub-half-minute perf check" in {
     given Corpus = Full.reducedByAFactorOf(42)
 
     val playAnalysis = forGameMode(Normal)

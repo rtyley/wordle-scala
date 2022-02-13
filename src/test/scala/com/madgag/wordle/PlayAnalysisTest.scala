@@ -36,20 +36,36 @@ class PlayAnalysisTest extends AnyFlatSpec with Matchers with OptionValues {
     forGameMode(Normal).bestInitial.exists(_.wordId>0) shouldBe false // maybe should be TotalFailure?
   }
 
-  it should "give the correct answer, for a quick check on 1% of the full corpus!" in {
-    given Corpus = Full.reducedByAFactorOf(100)
-    forGameMode(Normal).bestInitial.value.guessSum shouldBe 50
+  it should "match sonorous-chocolate for 1/800th corpus" in {
+    given c: Corpus = Full.reducedByAFactorOf(800)
+    forGameMode(Normal).bestInitial.value shouldBe WordGuessSum("aback".id, 5) // agrees with sonorous-chocolate
   }
 
-  it should "give the correct answer, for a quick check on 2% of the full corpus!" in {
-    given Corpus = Full.reducedByAFactorOf(50)
-    val wordGuessSum: WordGuessSum = forGameMode(Normal).bestInitial.value
-    println(wordGuessSum.summary)
-    wordGuessSum.guessSum shouldBe 102
+  it should "match sonorous-chocolate for 1/400th corpus" in {
+    given c: Corpus = Full.reducedByAFactorOf(400)
+    forGameMode(Normal).bestInitial.value shouldBe WordGuessSum("aback".id, 11) // agrees with sonorous-chocolate
+  }
+
+  it should "match sonorous-chocolate for 1/200th corpus" in {
+    given c: Corpus = Full.reducedByAFactorOf(200)
+    forGameMode(Normal).bestInitial.value shouldBe WordGuessSum("scrag".id, 24) // agrees with sonorous-chocolate
+  }
+
+  it should "match sonorous-chocolate for 1/100th corpus" in {
+    given c: Corpus = Full.reducedByAFactorOf(100)
+    forGameMode(Normal).bestInitial.value.guessSum shouldBe 50 // agrees with sonorous-chocolate
+  }
+
+  it should "match sonorous-chocolate for 1/50th corpus" in {
+    given c: Corpus = Full.reducedByAFactorOf(50)
+    c.writeOut()
+    val boo = forGameMode(Normal).bestInitial.value
+    println(boo.summary)
+    boo.guessSum shouldBe 106 // should agree with sonorous-chocolate, surely?!
   }
 
   it should "give the correct answer, for a sub-half-minute perf check" in {
-    given Corpus = Full.reducedByAFactorOf(38)
+    given Corpus = Full.reducedByAFactorOf(42)
 
     val playAnalysis = forGameMode(Normal)
     val best = playAnalysis.bestInitial.value

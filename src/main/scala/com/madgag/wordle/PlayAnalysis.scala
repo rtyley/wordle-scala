@@ -17,7 +17,7 @@ case class WordGuessSum(wordId: WordId, guessSum: Int) extends Ordered[WordGuess
   def word(using c: Corpus): Word = wordId.asWord
 
   def summary(using c: Corpus): String = {
-    if (wordId>0) {
+    if (wordId>=0) {
       s"$word $guessSum avg=${guessSum.toFloat/c.initialCandidates.possibleWords.size}"
     } else "*nothing found yet*"
 
@@ -54,8 +54,6 @@ object PlayAnalysis {
     incompleteFParamsKnowledge: IncompleteFParamsKnowledge,
     brucieBonus: Int
   )
-
-
 }
 
 class PlayAnalysis(

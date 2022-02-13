@@ -32,6 +32,17 @@ case class Corpus(commonWords: SortedSet[Word], uncommonWords: SortedSet[Word]) 
     discriminators = WordSet.fromSpecific((commonWords.size until allWordsOrdered.size).map(_.toShort))
   )
 
+  val storageDir: Path = Path.of("/tmp", "wordle-scala-cache", id)
+
+  def writeOut(): Unit = {
+    storageDir.toFile.mkdirs()
+    val hidden = storageDir.resolve("wordlist_hidden")
+    val all = storageDir.resolve("wordlist_all")
+    Files.write(hidden, commonWords.asJavaCollection)
+    Files.write(all, allWordsOrdered.asJavaCollection)
+    println(s"Wrote out $id to:\n$hidden\n$all")
+  }
+
   def withGameMode(gameMode: GameMode): CorpusWithGameMode = CorpusWithGameMode(this, gameMode)
 
   def idFor(word: Word): WordId = allWordsOrdered.indexOf(word).toShort

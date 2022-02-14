@@ -12,29 +12,25 @@ enum Node:
 object Strategy {
   val Win: (WordFeedback, Node) = WordFeedback.CompleteSuccess -> Node.Success
 
-//  case class ParsingState(path: Seq[WordFeedback], root: Node.Choice) {
-//    def accept(line: Line): ParsingState = rootChoice.fold {
-//      require(path.isEmpty)
-//
-//    } { old =>
-//      old
-//    }
-//
-//  }
+  case class ParsingState(rootChoice: Choice, path: List[(WordFeedback, WordId)]) {
+    def accept(line: Line): ParsingState = {
+      val updatedPath = path.take(line.guessIndexForHeadFeedback) ++ line.tailPairs
+      ParsingState(ParsingState.add(rootChoice, updatedPath),updatedPath)
+    }
+  }
   object ParsingState {
-//    def add(choice: Choice, addingSuccessPath: List[(WordFeedback, WordId)]) = {
-//      choice.copy(x = addingSuccessPath match {
-//        case (feedback, wordId) :: Nil => choice.x.updated(feedback, Choice(wordId, Map(Win)))
-//        case (feedback, wordId) :: tail =>
-//          choice.x.updatedWith(feedback) { existingNodeOpt =>
-//            add(existingNodeOpt.fold[Choice](Choice(wordId, Map.empty)) {
-//              case c: Choice => c
-//              case _ => throw new IllegalStateException(s"Can't update terminal success leaf $feedback on $choice !")
-//            }, tail)
-//          }
-//
-//      })
-//    }
+    def add(choice: Choice, addingSuccessPath: List[(WordFeedback, WordId)]): Choice = {
+      choice.copy(x = addingSuccessPath match {
+        case (feedback, wordId) :: tail =>
+          choice.x.updatedWith(feedback) { existingNodeOpt =>
+            Some(add(existingNodeOpt.fold[Choice](Choice(wordId, Map.empty)) {
+              case c: Choice => c
+              case _ => throw new IllegalStateException(s"Can't update terminal success leaf $feedback on $choice !")
+            }, tail))
+          }
+        case Nil => choice.x + Win
+      })
+    }
 
 //    def forInitialLine(line: Line): ParsingState = {
 //      require(line.headGuessIndex==0)
@@ -47,11 +43,14 @@ object Strategy {
 //    }
   }
 
-  def treeFrom(lines: Iterable[String])(using Corpus): Choice = {
-//    lines.map(Line(_)).foldLeft(ParsingState(path = Seq.empty, None)) {
-//      case (parsingState, line) => parsingState.accept(line)
-//    }.currentChoiceOpt.get
-    ???
+  def treeFrom(lineStrs: Iterable[String])(using Corpus): Choice = {
+    val lines = lineStrs.map(Line(_))
+
+    val rootWordId = lines.head.rootWordIdOpt.get
+
+    lines.foldLeft(ParsingState(Node.Choice(rootWordId, Map.empty), List.empty)) {
+      case (parsingState, line) => parsingState.accept(line)
+    }.rootChoice
   }
 }
 

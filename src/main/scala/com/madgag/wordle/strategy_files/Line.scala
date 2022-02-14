@@ -4,34 +4,38 @@ import com.madgag.wordle.*
 import com.madgag.wordle.Wordle.WordLength
 
 case class Line(
-  headFeedbackGuessIndexOrRootWordId: Either[Int,WordId],
+  guessIndexForHeadFeedbackOrRootWordId: Either[Int,WordId],
   tailPairs: Seq[(WordFeedback, WordId)]
 ) {
   require(tailPairs.forall(_._1 != WordFeedback.CompleteSuccess))
+
+  val rootWordIdOpt: Option[WordId] = guessIndexForHeadFeedbackOrRootWordId.toOption
+  val guessIndexForHeadFeedback: Int = guessIndexForHeadFeedbackOrRootWordId.left.getOrElse(0)
 }
 
 object Line {
+  val End: Line = Line(Left(-1), Seq.empty)
+  
   def apply(str: String)(using Corpus): Line = {
-    val rootWordText = str.substring(0,WordLength)
-    val rootWordIdOpt: Option[WordId] = Option.when(!rootWordText.isBlank)(rootWordText.id)
-
-    val pairs: IndexedSeq[(String, Word)] = str.drop(WordLength+1).dropRight(WordLength+2).grouped((WordLength * 2) + 3).map {
-      pairStr =>
-        val feedStr = pairStr.substring(0, WordLength)
-        val word = pairStr.substring(WordLength+2, (WordLength*2)+2)
-        (feedStr, word)
+    val pairs: IndexedSeq[(Word, String)] = str.grouped((Wordle.WordLength * 2) + 3).map { pairStr =>
+        val word = pairStr.substring(0, 5)
+        val feedStr = pairStr.substring(6, 11)
+        (word, feedStr)
     }.toIndexedSeq
-
-    val headFeedbackIndex = pairs.indexWhere(!_._1.isBlank)
-    require(rootWordIdOpt.isEmpty || headFeedbackIndex==0)
-
-    val feedbackThenOptimalWord: IndexedSeq[(WordFeedback, WordId)] = pairs.drop(headFeedbackIndex).map {
-      case (feedbackChars, word) => WordFeedback.fromChars(feedbackChars) -> word.id
-    }
     
+    val rootWordIdOpt: Option[WordId] = {
+      val rootWordText = pairs.head._1
+      Option.when(!rootWordText.isBlank)(rootWordText.id)
+    }
+    require(pairs.last._2 == WordFeedback.CompleteSuccess.characters)
+    val headGuessIndex = pairs.indexWhere(!_._2.isBlank)
+    val pairsWithContent = pairs.drop(headGuessIndex)
+    val feedbackWithoutFinalSuccess: Seq[WordFeedback] = pairsWithContent.map(p => WordFeedback.fromChars(p._2))
+    val optimalWordIdForFeedback: Seq[WordId] = pairsWithContent.tail.map(_._1.id)
+
     Line(
-      headFeedbackGuessIndexOrRootWordId = rootWordIdOpt.toRight(headFeedbackIndex),
-      tailPairs = feedbackThenOptimalWord
+      guessIndexForHeadFeedbackOrRootWordId = rootWordIdOpt.toRight(headGuessIndex),
+      tailPairs = feedbackWithoutFinalSuccess.zip(optimalWordIdForFeedback)
     )
   }
 }

@@ -14,6 +14,7 @@ class WordFeedback(val underlying: Byte) extends AnyVal {
     }).reverse
   }
   def emojis: String = toSeq.map(_.emoji).mkString
+  def characters: String = toSeq.map(_.character).mkString
 
   def isSuccess: Boolean = toSeq.forall(_ == Correct)
 

@@ -15,16 +15,29 @@ class LineTest extends AnyFlatSpec with Matchers with OptionValues {
   given Corpus = Full.reducedByAFactorOf(100)
 
   it should "recognise the first line" in {
-    Line("laris BBBBY1 pesto GGGGG2") shouldBe Line(
-      headFeedbackGuessIndexOrRootWordId = Right("laris".id),
+    val line = Line("laris BBBBY1 pesto GGGGG2")
+    line shouldBe Line(
+      guessIndexForHeadFeedbackOrRootWordId = Right("laris".id),
       tailPairs = Seq((fromChars("BBBBY"), "pesto".id))
     )
+    line.guessIndexForHeadFeedback shouldBe 0 // this codebase uses a zero-based guess index
   }
 
   it should "recognise a later line first line" in {
-    Line("                   YBBBB2 human GGGGG3") shouldBe Line(
-      headFeedbackGuessIndexOrRootWordId = Left(1),
+    val line = Line("                   YBBBB2 human GGGGG3")
+    line shouldBe Line(
+      guessIndexForHeadFeedbackOrRootWordId = Left(1),
       tailPairs = Seq((fromChars("YBBBB"), "human".id))
     )
+    line.guessIndexForHeadFeedback shouldBe 1
+  }
+
+  it should "handle the lines where not much happens" in {
+    val line = Line("                   GGGGG2")
+    line shouldBe Line(
+      guessIndexForHeadFeedbackOrRootWordId = Left(1),
+      tailPairs = Seq.empty
+    )
+    line.guessIndexForHeadFeedback shouldBe 1
   }
 }

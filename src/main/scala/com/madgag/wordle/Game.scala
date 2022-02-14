@@ -15,6 +15,8 @@ case class Game(targetWord: Word, corpusWithGameMode: CorpusWithGameMode) {
 }
 
 case class GameState(game: Game, playedWords: Seq[Word], candidates: Candidates) {
+  given Corpus = game.corpus
+
   def play(word: Word): Either[String, GameState] = {
     val wordId = game.corpus.idFor(word)
     if (wordId < 0) Left(s"'$word' is not in corpus (${game.corpus.id})") else {
@@ -31,5 +33,7 @@ case class GameState(game: Game, playedWords: Seq[Word], candidates: Candidates)
   
   lazy val evidence: Seq[Evidence] = playedWords.map(evidenceFrom(_, game.targetWord))
   
-  lazy val possibleWords: SortedSet[Word] = candidates.possibleWords.map(game.corpus.allWordsOrdered(_))
+  lazy val possibleWords: SortedSet[Word] = candidates.possibleWords.map(_.asWord)
+
+  def candidatesPartitionFor(word: Word) = game.analysis.possibleCandidateSetsIfCandidatePlayed(candidates, word.id)
 }

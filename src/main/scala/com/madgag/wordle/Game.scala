@@ -4,36 +4,54 @@ import com.madgag.wordle.Evidence.evidenceFrom
 import com.madgag.wordle.approaches.tartan.*
 import scala.collection.immutable.SortedSet
 
-case class Game(targetWord: Word, corpusWithGameMode: CorpusWithGameMode) {
-  val corpus: Corpus = corpusWithGameMode.corpus
+case class Game(targetWord: Word, gameMode: GameMode)(using val corpus: Corpus) {
+  val feedbackTable: FeedbackTable = FeedbackTable.obtainFor(gameMode)
 
-  val analysis = FeedbackTable.obtainFor(corpusWithGameMode)
+  val targetWordId: WordId = targetWord.id
 
-  val targetWordId = corpusWithGameMode.corpus.idFor(targetWord)
-
-  val start = GameState(this, Seq.empty, corpus.initialCandidates)
+  val start: GameState = GameState(this, Seq.empty, corpus.initialCandidates)
 }
 
 case class GameState(game: Game, playedWords: Seq[Word], candidates: Candidates) {
-  given Corpus = game.corpus
+  given corpus: Corpus = game.corpus
+
+  val guessIndex: Int = playedWords.size
 
   def play(word: Word): Either[String, GameState] = {
-    val wordId = game.corpus.idFor(word)
-    if (wordId < 0) Left(s"'$word' is not in corpus (${game.corpus.id})") else {
+    val wordId = word.id
+    if (wordId < 0) Left(s"'$word' is not in corpus (${corpus.id})") else {
       if (!candidates.contains(wordId)) Left("'$word' either prohibited, or does not discriminate solutions") else {
         val wordFeedback = WordFeedback.feedbackFor(word, game.targetWord)
 
-        val updatedCandidates = game.analysis.possibleCandidateSetsIfCandidatePlayed(candidates, wordId)(wordFeedback)
+        val updatedCandidates = game.feedbackTable.possibleCandidateSetsIfCandidatePlayed(candidates, wordId)(wordFeedback)
         Right(GameState(game, playedWords :+ word, updatedCandidates))
       }
     }
   }
-  
+
+  def playWith(wordlePlayer: WordlePlayer): GameState = {
+    val playerState = evidenceSoFar.foldLeft(wordlePlayer.start(game.gameMode)) {
+      case (player, evidence) => player.updateWith(evidence)
+    }
+
+    playWith(playerState)
+  }
+
+  private def playWith(playerState: WordlePlayerState): GameState = {
+    val updatedGameState: GameState = play(playerState.move).toOption.get
+    val resultingEvidence = updatedGameState.evidenceSoFar.last
+    println(resultingEvidence.ansiColouredString)
+    if (updatedGameState.shouldStopNow) updatedGameState else
+      updatedGameState.playWith(playerState.updateWith(resultingEvidence))
+  }
+
+  val shouldStopNow: Boolean = evidenceSoFar.lastOption.exists(_.isSuccess) || (guessIndex == MaxGuesses)
+
   def canPlay(word: Word): Boolean = candidates.contains(game.corpus.idFor(word))
-  
-  lazy val evidence: Seq[Evidence] = playedWords.map(evidenceFrom(_, game.targetWord))
-  
+
+  lazy val evidenceSoFar: Seq[Evidence] = playedWords.map(evidenceFrom(_, game.targetWord))
+
   lazy val possibleWords: SortedSet[Word] = candidates.possibleWords.map(_.asWord)
 
-  def candidatesPartitionFor(word: Word) = game.analysis.possibleCandidateSetsIfCandidatePlayed(candidates, word.id)
+  def candidatesPartitionFor(word: Word) = game.feedbackTable.possibleCandidateSetsIfCandidatePlayed(candidates, word.id)
 }

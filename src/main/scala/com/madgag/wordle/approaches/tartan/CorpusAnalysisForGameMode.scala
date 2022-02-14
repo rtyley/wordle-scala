@@ -16,10 +16,12 @@ import scala.concurrent.{Await, Future}
 import scala.util.Using
 
 sealed trait FeedbackTable(
-  val corpus: Corpus,
   val gameMode: GameMode,
   grid: Array[Array[Byte]]
-) {
+)(using val corpus: Corpus) {
+
+  def update(candidates: Candidates, evidence: Evidence): Candidates =
+    possibleCandidateSetsIfCandidatePlayed(candidates, evidence.word.id)(evidence.wordFeedback)
 
   // The results of this are independent of guess-number, so may be a good candidate for caching?
   def possibleCandidateSetsIfCandidatePlayed(candidates: Candidates, playedCandidateId: WordId): Map[WordFeedback,Candidates]
@@ -35,9 +37,8 @@ sealed trait FeedbackTable(
 }
 
 class AnalysisForCorpusWithNormalMode(
-  corpus: Corpus,
   grid: Array[Array[Byte]]
-) extends FeedbackTable(corpus, Normal, grid) {
+)(using corpus: Corpus) extends FeedbackTable(Normal, grid) {
 
   def possibleWordSetsOnCandidate(candidates: Candidates, playedCandidateId: WordId): Map[Byte, WordSet] = {
     val gridEntryForWord = grid(playedCandidateId)
@@ -79,9 +80,8 @@ class AnalysisForCorpusWithNormalMode(
 }
 
 class AnalysisForCorpusWithHardMode(
-  corpus: Corpus,
   grid: Array[Array[Byte]]
-) extends FeedbackTable(corpus, Hard, grid) {
+)(using Corpus) extends FeedbackTable(Hard, grid) {
 
   /**
    * HARD MODE: Trim both possible words & discriminators to comply with feedback
@@ -98,8 +98,8 @@ class AnalysisForCorpusWithHardMode(
 }
 
 object FeedbackTable {
-  def obtainFor(corpusWithGameMode: CorpusWithGameMode): FeedbackTable = {
-    val corpus = corpusWithGameMode.corpus
+  def obtainFor(gameMode: GameMode)(using corpus: Corpus): FeedbackTable = {
+    val corpusWithGameMode = CorpusWithGameMode(corpus, gameMode)
     val grid: Array[Array[Byte]] = LocalFileCache.obtain(corpusWithGameMode.storageDir.resolve("grid.gz")) {
       for {
         candidateWord <- corpus.allWordsOrdered.toArray
@@ -110,8 +110,8 @@ object FeedbackTable {
     }
 
     corpusWithGameMode.gameMode match {
-      case Normal => AnalysisForCorpusWithNormalMode(corpus, grid)
-      case Hard => AnalysisForCorpusWithHardMode(corpus, grid)
+      case Normal => AnalysisForCorpusWithNormalMode(grid)
+      case Hard => AnalysisForCorpusWithHardMode(grid)
     }
   }
 }

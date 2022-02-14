@@ -35,8 +35,8 @@ object PlayAnalysis {
 
   type FResult  = Either[Int, WordGuessSum]
 
-  def forGameMode(gameMode: GameMode)(using c: Corpus): PlayAnalysis =
-    new PlayAnalysis(FeedbackTable.obtainFor(CorpusWithGameMode(c, gameMode)))
+  def forGameMode(gameMode: GameMode)(using Corpus): PlayAnalysis =
+    new PlayAnalysis(FeedbackTable.obtainFor(gameMode))
 
   case class CandidatesPartitionPlayCache(thresholdToBeat: Int, guessSum: Option[Int])
 
@@ -56,7 +56,7 @@ object PlayAnalysis {
   )
 }
 
-class PlayAnalysis(
+case class PlayAnalysis(
   feedbackTable: FeedbackTable
 ) {
   given Corpus = feedbackTable.corpus
@@ -178,7 +178,8 @@ class PlayAnalysis(
             case Some(Right(wordGuessSum)) => Some(wordGuessSum)
             case Some(Left(searchedThreshold)) if searchedThreshold >= beta => None
             case _ =>
-              val candidateOutlooks: Seq[CandidateOutlook] = orderedCandidateOutlooksFor(h)
+              val candidateOutlooks: Seq[CandidateOutlook] =
+                orderedCandidateOutlooksFor(h).distinctBy(_.candidatesPartition.hashCode)
 
               val newResult = candidateOutlooks.foldLeft[FResult](Left(beta-h.possibleWords.size)) {
                 case (bestSoFar, candidateOutlook) =>
@@ -220,9 +221,9 @@ class PlayAnalysis(
   private def cachedFResultsFor(fParams: FParams): Option[FResult] =
     Option(fResultsByFParams.get(fParams))
 
-  private def orderedCandidateOutlooksFor(h: Candidates): Seq[CandidateOutlook] = h.allWords.toSeq.map { t =>
+  def orderedCandidateOutlooksFor(h: Candidates): Seq[CandidateOutlook] = h.allWords.toSeq.map { t =>
     outlookIfCandidatePlayed(h, t)
-  }.distinctBy(_.candidatesPartition.hashCode).sortBy(_.candidatesPartition.evennessScore)
+  }.sortBy(_.candidatesPartition.evennessScore)
 
   val candidateSetsByInput: java.util.concurrent.ConcurrentMap[(WordId, Candidates),CandidateOutlook] =
     new java.util.concurrent.ConcurrentHashMap()

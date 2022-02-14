@@ -13,18 +13,15 @@ class GameTest extends AnyFlatSpec with Matchers with EitherValues {
 
     val playAnalysis = forGameMode(Normal)
 
-    val game = Game("robin", CorpusWithGameMode(c, Normal))
+    val game = Game("robin", Normal)
 
     val after1stGuess = game.start.play("salet").value
-    
-    
-    
+    println(s"After 1st guess ${after1stGuess.possibleWords.size} possible words")
     val after2ndGuess = after1stGuess.play("boing").value
     
     println(after2ndGuess.possibleWords.mkString(","))
 
     //val bestChoiceFor2ndMove = playAnalysis.f(0, after1stGuess.candidates).get
     //println(bestChoiceFor2ndMove.summary)
-
   }
 }

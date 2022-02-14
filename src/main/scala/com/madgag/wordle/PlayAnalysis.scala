@@ -102,7 +102,7 @@ case class PlayAnalysis(
      *         the threshold.
      */
     private def calculateRequiredGuesses(thresholdToBeat: Int, nextGuessIndex: Int): Option[Int] = {
-      val (incompleteKnowledges, knownGuessSums) = possibleCandidates.map {
+      val (incompleteKnowledges, knownGuessSums) = possibleCandidates.toSeq.map {
         h =>
           val params = FParams(nextGuessIndex, h)
           cachedFResultsFor(params).fold(Left(IncompleteFParamsKnowledge(params, None))) { result =>

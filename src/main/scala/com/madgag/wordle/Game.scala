@@ -12,10 +12,20 @@ case class Game(targetWord: Word, gameMode: GameMode)(using val corpus: Corpus) 
   val start: GameState = GameState(this, Seq.empty, corpus.initialCandidates)
 }
 
+object Game {
+  def totalGuessSumFor(wordlePlayer: WordlePlayer, gameMode: GameMode)(using corpus: Corpus): Int = {
+    corpus.commonWords.toSeq.map { targetWord =>
+      val endGameState = Game(targetWord, gameMode).start.playWith(wordlePlayer)
+      require(endGameState.isSuccess)
+      endGameState.guessesTaken
+    }.sum
+  }
+}
+
 case class GameState(game: Game, playedWords: Seq[Word], candidates: Candidates) {
   given corpus: Corpus = game.corpus
 
-  val guessIndex: Int = playedWords.size
+  val guessesTaken: Int = playedWords.size
 
   def play(word: Word): Either[String, GameState] = {
     val wordId = word.id
@@ -40,12 +50,14 @@ case class GameState(game: Game, playedWords: Seq[Word], candidates: Candidates)
   private def playWith(playerState: WordlePlayerState): GameState = {
     val updatedGameState: GameState = play(playerState.move).toOption.get
     val resultingEvidence = updatedGameState.evidenceSoFar.last
-    println(resultingEvidence.ansiColouredString)
+    println(s"${updatedGameState.guessesTaken}. ${resultingEvidence.ansiColouredString}")
     if (updatedGameState.shouldStopNow) updatedGameState else
       updatedGameState.playWith(playerState.updateWith(resultingEvidence))
   }
 
-  val shouldStopNow: Boolean = evidenceSoFar.lastOption.exists(_.isSuccess) || (guessIndex == MaxGuesses)
+  val isSuccess: Boolean = evidenceSoFar.lastOption.exists(_.isSuccess)
+
+  val shouldStopNow: Boolean = isSuccess || (guessesTaken == MaxGuesses)
 
   def canPlay(word: Word): Boolean = candidates.contains(game.corpus.idFor(word))
 

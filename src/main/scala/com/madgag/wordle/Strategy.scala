@@ -1,6 +1,7 @@
 package com.madgag.wordle
 
 import com.madgag.wordle.Node.Choice
+import com.madgag.wordle.approaches.tartan.{Candidates, FeedbackTable}
 import com.madgag.wordle.strategy_files.Line
 
 
@@ -51,6 +52,23 @@ object Strategy {
     lines.foldLeft(ParsingState(Node.Choice(rootWordId, Map.empty), List.empty)) {
       case (parsingState, line) => parsingState.accept(line)
     }.rootChoice
+  }
+
+  def fromPlayer(wordlePlayer: WordlePlayer, gameMode: GameMode)(using corpus: Corpus): Node.Choice = {
+    val feedbackTable = FeedbackTable.obtainFor(gameMode)
+
+    def choiceFromGameState(playerState: WordlePlayer.State, candidates: Candidates): Choice = {
+      val word = playerState.move
+      val wordId = word.id
+      Choice(wordId, for ((feedback, updatedCandidates) <-feedbackTable.possibleCandidateSetsIfCandidatePlayed(candidates, wordId)) yield {
+        feedback -> (feedback match {
+          case WordFeedback.CompleteSuccess => Node.Success
+          case _ => choiceFromGameState(playerState.updateWith(Evidence(word, feedback)), updatedCandidates)
+        })
+      })
+    }
+
+    choiceFromGameState(wordlePlayer.start(gameMode), corpus.initialCandidates)
   }
 }
 

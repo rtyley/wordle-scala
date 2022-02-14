@@ -1,5 +1,7 @@
 package com.madgag.wordle.players
 
+import com.madgag.wordle.*
+import com.madgag.wordle.Corpus.Full
 import com.madgag.wordle.{Corpus, Game, StrategyExample}
 import com.madgag.wordle.GameMode.Normal
 import com.madgag.wordle.PlayAnalysis.forGameMode
@@ -15,5 +17,15 @@ class HackyMcHackFaceTest extends AnyFlatSpec with Matchers with EitherValues {
     Game(corpus.commonWords.head, Normal).start.playWith(HackyMcHackFace)
 
     Game.totalGuessSumFor(HackyMcHackFace, Normal) shouldBe 50
+  }
+
+  it should "play Wordles we definitely get wrong" in {
+    given corpus: Corpus = Full.reducedByAFactorOf(90)
+
+    val rootChoice = Strategy.fromPlayer(HackyMcHackFace, Normal)
+
+    println(rootChoice)
+
+    Game.totalGuessSumFor(HackyMcHackFace, Normal) shouldBe 58
   }
 }

@@ -58,6 +58,7 @@ class PlayAnalysisTest extends AnyFlatSpec with Matchers with OptionValues {
 
   it should "match sonorous-chocolate for 1/100th corpus" in {
     given c: Corpus = Full.reducedByAFactorOf(100)
+    println(c.id)
     forGameMode(Normal).bestInitial.value.guessSum shouldBe 50 // agrees with sonorous-chocolate
   }
 

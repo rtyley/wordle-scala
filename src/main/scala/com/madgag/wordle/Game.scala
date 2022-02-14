@@ -47,7 +47,7 @@ case class GameState(game: Game, playedWords: Seq[Word], candidates: Candidates)
     playWith(playerState)
   }
 
-  private def playWith(playerState: WordlePlayerState): GameState = {
+  private def playWith(playerState: WordlePlayer.State): GameState = {
     val updatedGameState: GameState = play(playerState.move).toOption.get
     val resultingEvidence = updatedGameState.evidenceSoFar.last
     println(s"${updatedGameState.guessesTaken}. ${resultingEvidence.ansiColouredString}")

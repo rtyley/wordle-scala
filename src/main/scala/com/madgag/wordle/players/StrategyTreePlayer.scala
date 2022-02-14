@@ -24,11 +24,11 @@ object StrategyTreePlayer {
 case class StrategyTreePlayer(rootChoice: Node.Choice) extends WordlePlayer {
   val treeCoverage: Coverage = StrategyTreePlayer.coverageOf(rootChoice)
 
-  def start(gameMode: GameMode)(using corpus: Corpus): WordlePlayerState = {
+  def start(gameMode: GameMode)(using corpus: Corpus): WordlePlayer.State = {
     require(corpus.commonWordsOrdered.indices.toSet == treeCoverage.targetWordsResolved)
     require(treeCoverage.wordsEncountered.subsetOf(corpus.allWordsOrdered.indices.map(_.asInstanceOf[WordId]).toSet))
 
-    case class State(currentChoice: Node.Choice) extends WordlePlayerState {
+    case class State(currentChoice: Node.Choice) extends WordlePlayer.State {
       lazy val move: Word = currentChoice.wordId.asWord
 
       def updateWith(evidence: Evidence): State = {

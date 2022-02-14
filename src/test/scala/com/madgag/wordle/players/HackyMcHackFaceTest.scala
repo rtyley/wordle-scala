@@ -1,6 +1,6 @@
 package com.madgag.wordle.players
 
-import com.madgag.wordle.{Corpus, Game}
+import com.madgag.wordle.{Corpus, Game, StrategyExample}
 import com.madgag.wordle.GameMode.Normal
 import com.madgag.wordle.PlayAnalysis.forGameMode
 import org.scalatest.EitherValues
@@ -9,8 +9,11 @@ import org.scalatest.matchers.should.Matchers
 
 class HackyMcHackFaceTest extends AnyFlatSpec with Matchers with EitherValues {
   it should "play Wordles" in {
-    given c:Corpus = Corpus.Full.reducedByAFactorOf(20)
+    import StrategyExample.*
+    given corpus: Corpus = StrategyExample.given_Corpus
 
-    Game(c.commonWords.head, Normal).start.playWith(HackyMcHackFace)
+    Game(corpus.commonWords.head, Normal).start.playWith(HackyMcHackFace)
+
+    Game.totalGuessSumFor(HackyMcHackFace, Normal) shouldBe 50
   }
 }

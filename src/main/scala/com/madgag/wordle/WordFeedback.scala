@@ -22,6 +22,14 @@ class WordFeedback(val underlying: Byte) extends AnyVal {
 }
 
 object WordFeedback {
+
+  /**
+   * This is the ordering used in the strategy tree files output by
+   * https://github.com/alex1770/wordle, eg:
+   * `wordle -p tree.txt`
+   */
+  val AlphabeticalOrdering: Ordering[WordFeedback] = Ordering.by(_.characters)
+
   val numValues: Int = LetterFeedback.values.length
   val CompleteSuccess: WordFeedback = WordFeedback(Seq.fill(WordLength)(Correct))
 

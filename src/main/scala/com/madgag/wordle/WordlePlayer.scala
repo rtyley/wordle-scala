@@ -7,7 +7,7 @@ trait WordlePlayer {
 object WordlePlayer {
   trait State {
     def move: Word
-
+    
     def updateWith(evidence: Evidence): State
   }
 }

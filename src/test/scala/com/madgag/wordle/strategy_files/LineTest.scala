@@ -4,7 +4,7 @@ import com.madgag.wordle.*
 import com.madgag.wordle.Corpus.{Full, fromAsteriskFormat}
 import com.madgag.wordle.GameMode.Normal
 import com.madgag.wordle.PlayAnalysis.forGameMode
-import com.madgag.wordle.WordFeedback.CompleteSuccess
+import com.madgag.wordle.WordFeedback.{CompleteSuccess, fromChars}
 import com.madgag.wordle.{Corpus, WordFeedback, WordGuessSum}
 import org.scalatest.OptionValues
 import org.scalatest.flatspec.AnyFlatSpec
@@ -16,19 +16,15 @@ class LineTest extends AnyFlatSpec with Matchers with OptionValues {
 
   it should "recognise the first line" in {
     Line("laris BBBBY1 pesto GGGGG2") shouldBe Line(
-      headGuessIndex = 0,
-      headWordId = Some("laris".id),
-      headFeedback = WordFeedback.fromChars("BBBBY"),
-      tailPairs = Seq(("pesto".id, CompleteSuccess))
+      headFeedbackGuessIndexOrRootWordId = Right("laris".id),
+      tailPairs = Seq((fromChars("BBBBY"), "pesto".id))
     )
   }
 
   it should "recognise a later line first line" in {
     Line("                   YBBBB2 human GGGGG3") shouldBe Line(
-      headGuessIndex = 1,
-      headWordId = None,
-      headFeedback = WordFeedback.fromChars("YBBBB"),
-      tailPairs = Seq(("human".id, CompleteSuccess))
+      headFeedbackGuessIndexOrRootWordId = Left(1),
+      tailPairs = Seq((fromChars("YBBBB"), "human".id))
     )
   }
 }

@@ -1,7 +1,7 @@
 package com.madgag.wordle
 
 trait WordlePlayer {
-  def start(gameMode: GameMode)(using Corpus): WordlePlayer.State
+  def start: WordlePlayer.State
 }
 
 object WordlePlayer {

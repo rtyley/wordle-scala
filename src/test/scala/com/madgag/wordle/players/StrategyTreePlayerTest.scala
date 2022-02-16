@@ -17,7 +17,7 @@ class StrategyTreePlayerTest extends AnyFlatSpec with Matchers {
     import StrategyExample.*
     given Corpus = StrategyExample.given_Corpus
 
-    val player = StrategyTreePlayer(exampleStrategyTree)
+    val player = StrategyTreePlayer(exampleStrategyTree).playing
 
     Game.totalGuessSumFor(player, Normal) shouldBe 50
   }
@@ -28,7 +28,7 @@ class StrategyTreePlayerTest extends AnyFlatSpec with Matchers {
       Resources.asCharSource(getClass.getResource("/sonorous-chocolate/tree.corpus-26-of-145-words__F1978AB0.Normal.txt"), UTF_8)
         .readLines().asScala.toSeq)
 
-    val player = StrategyTreePlayer(rootChoice)
+    val player = StrategyTreePlayer(rootChoice).playing
 
     Game.totalGuessSumFor(player, Normal) shouldBe 58
   }

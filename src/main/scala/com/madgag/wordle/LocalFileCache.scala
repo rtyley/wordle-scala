@@ -9,6 +9,7 @@ import scala.util.Using
 
 object LocalFileCache {
   def obtain[T](path: Path)(generate: => T): T = {
+    println("Loading")
     val file = path.toFile
     if (file.exists()) {
       Using.resource(new ObjectInputStream(new GZIPInputStream(new FileInputStream(file)))) { s =>

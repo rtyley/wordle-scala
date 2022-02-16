@@ -21,10 +21,10 @@ object StrategyTreePlayer {
   }
 }
 
-case class StrategyTreePlayer(rootChoice: Node.Choice) extends WordlePlayer {
+case class StrategyTreePlayer(rootChoice: Node.Choice) {
   val treeCoverage: Coverage = StrategyTreePlayer.coverageOf(rootChoice)
 
-  def start(gameMode: GameMode)(using corpus: Corpus): WordlePlayer.State = {
+  def playing(using corpus: Corpus): WordlePlayer = {
     require(corpus.commonWordsOrdered.indices.toSet == treeCoverage.targetWordsResolved)
     require(treeCoverage.wordsEncountered.subsetOf(corpus.allWordsOrdered.indices.map(_.asInstanceOf[WordId]).toSet))
 
@@ -37,6 +37,8 @@ case class StrategyTreePlayer(rootChoice: Node.Choice) extends WordlePlayer {
       }
     }
 
-    State(rootChoice)
+    new WordlePlayer {
+      val start: WordlePlayer.State = State(rootChoice)
+    }
   }
 }

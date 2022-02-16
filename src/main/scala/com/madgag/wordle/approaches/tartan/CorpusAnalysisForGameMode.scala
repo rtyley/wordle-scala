@@ -9,6 +9,7 @@ import com.madgag.wordle.wordsets.partition.{FeedbackPartition, Partition}
 
 import java.io.*
 import java.nio.file.Files
+import java.util.concurrent.ConcurrentMap
 import java.util.zip.{GZIPInputStream, GZIPOutputStream}
 import scala.collection.immutable.{SortedMap, SortedSet}
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -22,6 +23,8 @@ sealed trait FeedbackTable(
 )(using val corpus: Corpus) {
 
   val feedbackPartitionPool: FeedbackPartition.Pool = FeedbackPartition.Pool(Partition.Pool())
+
+  def updatedPermittedWordsGiven(permittedWords: WordSet, wordId: WordId, wordFeedback: WordFeedback): WordSet
 
   def update(candidates: Candidates, evidence: Evidence): Candidates =
     possibleCandidateSetsIfCandidatePlayed(candidates, evidence.word.id)(evidence.wordFeedback)
@@ -54,6 +57,8 @@ sealed trait FeedbackTable(
 class AnalysisForCorpusWithNormalMode(
   grid: Array[Array[Byte]]
 )(using corpus: Corpus) extends FeedbackTable(Normal, grid) {
+
+  def updatedPermittedWordsGiven(permittedWords: WordSet, wordId: WordId, wordFeedback: WordFeedback): WordSet = permittedWords
 
   def possibleWordSetsOnCandidate(candidates: Candidates, playedCandidateId: WordId): Map[Byte, WordSet] = {
     val gridEntryForWord = grid(playedCandidateId)
@@ -97,6 +102,11 @@ class AnalysisForCorpusWithHardMode(
   grid: Array[Array[Byte]]
 )(using Corpus) extends FeedbackTable(Hard, grid) {
 
+  def updatedPermittedWordsGiven(permittedWords: WordSet, playedWordId: WordId, wordFeedback: WordFeedback): WordSet = {
+    val gridEntryForWord = grid(playedWordId)
+    permittedWords.filter(wordId => gridEntryForWord(wordId) == wordFeedback.underlying)
+  }
+
   /**
    * HARD MODE: Trim both possible words & discriminators to comply with feedback
    */
@@ -112,20 +122,25 @@ class AnalysisForCorpusWithHardMode(
 }
 
 object FeedbackTable {
+
+  val tableMap: ConcurrentMap[CorpusWithGameMode,FeedbackTable] = new java.util.concurrent.ConcurrentHashMap()
+
   def obtainFor(gameMode: GameMode)(using corpus: Corpus): FeedbackTable = {
     val corpusWithGameMode = CorpusWithGameMode(corpus, gameMode)
-    val grid: Array[Array[Byte]] = LocalFileCache.obtain(corpusWithGameMode.storageDir.resolve("grid.gz")) {
-      for {
-        candidateWord <- corpus.allWordsOrdered.toArray
-      } yield {
-        for (targetWord <- corpusWithGameMode.wordsRequiringEvaluationAsTargets)
-          yield feedbackFor(candidateWord, targetWord).underlying
-      }.toArray
-    }
+    tableMap.computeIfAbsent(corpusWithGameMode, { _ =>
+      val grid: Array[Array[Byte]] = LocalFileCache.obtain(corpusWithGameMode.storageDir.resolve("grid.gz")) {
+        for {
+          candidateWord <- corpus.allWordsOrdered.toArray
+        } yield {
+          for (targetWord <- corpusWithGameMode.wordsRequiringEvaluationAsTargets)
+            yield feedbackFor(candidateWord, targetWord).underlying
+        }.toArray
+      }
 
-    corpusWithGameMode.gameMode match {
-      case Normal => AnalysisForCorpusWithNormalMode(grid)
-      case Hard => AnalysisForCorpusWithHardMode(grid)
-    }
+      corpusWithGameMode.gameMode match {
+        case Normal => AnalysisForCorpusWithNormalMode(grid)
+        case Hard => AnalysisForCorpusWithHardMode(grid)
+      }
+    })
   }
 }

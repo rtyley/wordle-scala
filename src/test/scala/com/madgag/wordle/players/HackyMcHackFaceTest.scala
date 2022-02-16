@@ -20,18 +20,22 @@ class HackyMcHackFaceTest extends AnyFlatSpec with Matchers with EitherValues {
     import StrategyExample.*
     given corpus: Corpus = StrategyExample.given_Corpus
 
-    Game(corpus.commonWords.head, Normal).start.playWith(HackyMcHackFace)
+    val player = HackyMcHackFace.playing(Normal)
 
-    Game.totalGuessSumFor(HackyMcHackFace, Normal) shouldBe 50
+    Game(corpus.commonWords.head, Normal).start.playWith(player)
+
+    Game.totalGuessSumFor(player, Normal) shouldBe 50
   }
 
   it should "play Wordles we definitely get wrong" in {
     given corpus: Corpus = Full.reducedByAFactorOf(90)
 
-    val rootChoice = Strategy.fromPlayer(HackyMcHackFace, Normal)
+    val player = HackyMcHackFace.playing(Normal)
+
+    val rootChoice = Strategy.fromPlayer(player, Normal)
 
     println(rootChoice)
 
-    Game.totalGuessSumFor(HackyMcHackFace, Normal) shouldBe 58
+    Game.totalGuessSumFor(player, Normal) shouldBe 58
   }
 }

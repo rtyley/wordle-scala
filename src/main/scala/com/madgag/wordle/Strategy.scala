@@ -63,6 +63,7 @@ object Strategy {
     def choiceFromGameState(playerState: WordlePlayer.State, candidates: Candidates): Choice = {
       val word = playerState.move
       val wordId = word.id
+      require(candidates.contains(wordId)) // otherwise the Player may be breaking the rules in Hard mode... note this only permits 'useful' moves
       Choice(wordId, for ((feedback, updatedCandidates) <- feedbackTable.possibleCandidateSetsIfCandidatePlayed(candidates, wordId)) yield {
         feedback -> (feedback match {
           case WordFeedback.CompleteSuccess => Node.Success
@@ -71,7 +72,7 @@ object Strategy {
       })
     }
 
-    choiceFromGameState(wordlePlayer.start(gameMode), corpus.initialCandidates)
+    choiceFromGameState(wordlePlayer.start, corpus.initialCandidates)
   }
 }
 

@@ -1,7 +1,8 @@
 package com.madgag.wordle.wordsets
 
-import scala.collection.SpecificIterableFactory
+import scala.collection.{IterableOnce, SpecificIterableFactory}
 import com.madgag.wordle.WordId
+import com.madgag.wordle.wordsets.WordSet.intern
 
 import java.util
 import scala.Array.emptyShortArray
@@ -41,6 +42,36 @@ class ShortArrayWordSet(elems: Array[Short]) extends WordSet {
       new ShortArrayWordSet(newElems)
     }
   }
+
+  override def removedAll(it: IterableOnce[WordId]): WordSet = it match {
+    case ss: SortedSet[WordId] =>
+      val builder = WordSet.newBuilder
+      val newElems: Array[Short] = Array.ofDim(elems.length)
+      var alreadySearchedUpTo: Int = 0
+      var oldElemsCopiedUpTo: Int = 0
+      var newElemsPopulatedUpTo: Int = 0
+      for (elemToRemove <- ss) {
+        val elemIndex = util.Arrays.binarySearch(elems, alreadySearchedUpTo, elems.length, elemToRemove) // (-(insertion point) - 1)
+        if (elemIndex < 0) {
+          alreadySearchedUpTo = -(elemIndex+1)
+        } else { // Element to remove has been found
+          val chunkSize = elemIndex - oldElemsCopiedUpTo
+          Array.copy(elems,oldElemsCopiedUpTo,newElems,newElemsPopulatedUpTo,chunkSize)
+          oldElemsCopiedUpTo = elemIndex + 1
+          newElemsPopulatedUpTo += chunkSize
+          alreadySearchedUpTo = elemIndex + 1
+        }
+      }
+      val finalChunk = elems.length - oldElemsCopiedUpTo
+      Array.copy(elems,oldElemsCopiedUpTo,newElems,newElemsPopulatedUpTo,finalChunk)
+      val finalElems: Array[Short] = Array.ofDim(newElemsPopulatedUpTo+finalChunk)
+      Array.copy(newElems,0,finalElems,0,finalElems.length)
+      new ShortArrayWordSet(finalElems)
+
+    case _ => super.removedAll(it)
+  }
+
+
 
   // Members declared in scala.collection.SortedOps
   def rangeImpl(from: Option[WordId], until: Option[WordId]): WordSet = ???

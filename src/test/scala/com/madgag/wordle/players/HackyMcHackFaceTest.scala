@@ -10,6 +10,12 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 class HackyMcHackFaceTest extends AnyFlatSpec with Matchers with EitherValues {
+//  it should "play Wordle with full corpus, ha!" in {
+//    given corpus: Corpus = Full
+//
+//    Game(corpus.commonWords.head, Normal).start.playWith(HackyMcHackFace)
+//  }
+
   it should "play Wordles" in {
     import StrategyExample.*
     given corpus: Corpus = StrategyExample.given_Corpus

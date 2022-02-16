@@ -29,11 +29,14 @@ sealed trait FeedbackTable(
   def wordsThatDoStillDiscriminate(
     possibleDiscriminators: Iterable[WordId], // Is it _best_ for it to be a WordSet?
     possibleWordsThatRemainPossible: WordSet
-  ): WordSet = if (possibleWordsThatRemainPossible.sizeIs <= 2) WordSet.empty else WordSet.fromKnownDistinct(possibleDiscriminators.filter { wordId =>
-    val gridEntryForWord = grid(wordId)
-    val firstFeedback = gridEntryForWord(possibleWordsThatRemainPossible.head)
-    possibleWordsThatRemainPossible.exists(gridEntryForWord(_) != firstFeedback) // re-introduce tail?
-  })
+  ): WordSet = if (possibleWordsThatRemainPossible.sizeIs <= 2) WordSet.empty else WordSet.fromKnownDistinct(
+    possibleDiscriminators
+      .filter { wordId =>
+        val gridEntryForWord = grid(wordId)
+        val firstFeedback = gridEntryForWord(possibleWordsThatRemainPossible.head)
+        possibleWordsThatRemainPossible.exists(gridEntryForWord(_) != firstFeedback) // re-introduce tail?
+      }
+  )
 }
 
 class AnalysisForCorpusWithNormalMode(
@@ -61,7 +64,6 @@ class AnalysisForCorpusWithNormalMode(
     // if the `Candidates` for possibleWordsThatRemainPossible is already cached, return it (hard-mode, uh-oh?), skip next part
     val possibleDiscriminators =
       possibleWordsThatBecameImpossible.view ++ candidates.discriminators // we like these being in order, but don't *need* to do more than iterate over them
-    // possibleWordsThatBecameImpossible ++ candidates.discriminators
     Candidates(
       possibleWords = possibleWordsThatRemainPossible,
       discriminators = wordsThatDoStillDiscriminate(possibleDiscriminators, possibleWordsThatRemainPossible)

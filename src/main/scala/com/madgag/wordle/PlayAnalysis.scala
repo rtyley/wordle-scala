@@ -124,17 +124,7 @@ case class PlayAnalysis(
       }.filter(_ < thresholdToBeat)
     }
 
-    private def augmentWithRemainingCachedBetaThresholds(
-      incompleteKnowledgesSorted: Seq[IncompleteFParamsKnowledge]
-    ): Seq[BrucieBonusAndIncompleteFParamsKnowledge] = {
-      incompleteKnowledgesSorted.foldRight((0, List.empty[BrucieBonusAndIncompleteFParamsKnowledge])) {
-        case (incompleteKnowledge, (accBrucieBonus: Int, augmentedList: List[BrucieBonusAndIncompleteFParamsKnowledge])) =>
-          (
-            accBrucieBonus + incompleteKnowledge.resultKnownToBeWorseThanThreshold.getOrElse(0),
-            BrucieBonusAndIncompleteFParamsKnowledge(incompleteKnowledge, accBrucieBonus) :: augmentedList
-          )
-      }._2
-    }
+
   }
 
   case class CandidateOutlook(t: WordId, candidatesPartition: CandidatesPartition) {
@@ -143,6 +133,19 @@ case class PlayAnalysis(
         newBestScore => WordGuessSum(t, newBestScore)
       }
     }
+  }
+
+
+  private def augmentWithRemainingCachedBetaThresholds(
+    incompleteKnowledgesSorted: Seq[IncompleteFParamsKnowledge]
+  ): Seq[BrucieBonusAndIncompleteFParamsKnowledge] = {
+    incompleteKnowledgesSorted.foldRight((0, List.empty[BrucieBonusAndIncompleteFParamsKnowledge])) {
+      case (incompleteKnowledge, (accBrucieBonus: Int, augmentedList: List[BrucieBonusAndIncompleteFParamsKnowledge])) =>
+        (
+          accBrucieBonus + incompleteKnowledge.resultKnownToBeWorseThanThreshold.getOrElse(0),
+          BrucieBonusAndIncompleteFParamsKnowledge(incompleteKnowledge, accBrucieBonus) :: augmentedList
+        )
+    }._2
   }
 
   val newBestScoreCounter = new LongAdder()
@@ -181,13 +184,18 @@ case class PlayAnalysis(
               val candidateOutlooks: Seq[CandidateOutlook] =
                 orderedCandidateOutlooksFor(h).distinctBy(_.candidatesPartition.hashCode)
 
+              val candOutlooks = feedbackTable.orderedCandidateOutlooksFor(h)
+                .distinctBy(_.feedbackPartition)
+
+//              val newResult = candOutlooks.foldLeft[FResult](Left(beta-h.possibleWords.size)) {
+//                case (bestSoFar, candidateOutlook) =>
+//                  candidateOutlook.findCandidateScoringBetterThan(bestSoFar.map(_.guessSum).merge, nextGuessIndex).map(Right(_)).getOrElse(bestSoFar)
+//              }.map(_.addGuesses(h.possibleWords.size)).left.map(_ => beta)
+
+
               val newResult = candidateOutlooks.foldLeft[FResult](Left(beta-h.possibleWords.size)) {
                 case (bestSoFar, candidateOutlook) =>
-                  val maybeSum = candidateOutlook.findCandidateScoringBetterThan(bestSoFar.map(_.guessSum).merge, nextGuessIndex)
-//                  if (guessIndex <= 1 ) {
-//                    println(s"$guessIndex. ${candidateOutlook.t.asWord} $maybeSum - ${bestSoFar.summary}")
-//                  }
-                  maybeSum.map(Right(_)).getOrElse(bestSoFar)
+                  candidateOutlook.findCandidateScoringBetterThan(bestSoFar.map(_.guessSum).merge, nextGuessIndex).map(Right(_)).getOrElse(bestSoFar)
               }.map(_.addGuesses(h.possibleWords.size)).left.map(_ => beta)
 
               fResultsByFParams.merge(fParams, newResult, {
@@ -196,9 +204,18 @@ case class PlayAnalysis(
                 case (Left(a) ,Left(b)) => Left(Math.max(a,b))
               }).toOption
           }
-
       }
     }
+  }
+//
+//  def findCandidateScoringBetterThan
+//
+  def scoreIfBetterThan(thresholdToBeat: Int, candidates: Candidates, candOutlook: CandOutlook, nextGuessIndex: Int): Option[WordGuessSum] = {
+
+//  candOutlook..findRequiredGuessesWithPerfectPlay(thresholdToBeat, nextGuessIndex).map {
+//      newBestScore => WordGuessSum(t, newBestScore)
+//    }
+  ???
   }
 
   /* Is an Option enough?!?

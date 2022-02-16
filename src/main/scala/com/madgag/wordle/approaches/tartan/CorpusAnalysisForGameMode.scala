@@ -5,6 +5,7 @@ import com.madgag.wordle.GameMode.*
 import com.madgag.wordle.WordFeedback.feedbackFor
 import com.madgag.wordle.*
 import com.madgag.wordle.wordsets.*
+import com.madgag.wordle.wordsets.partition.{FeedbackPartition, Partition}
 
 import java.io.*
 import java.nio.file.Files
@@ -20,11 +21,22 @@ sealed trait FeedbackTable(
   grid: Array[Array[Byte]]
 )(using val corpus: Corpus) {
 
+  val feedbackPartitionPool: FeedbackPartition.Pool = FeedbackPartition.Pool(Partition.Pool())
+
   def update(candidates: Candidates, evidence: Evidence): Candidates =
     possibleCandidateSetsIfCandidatePlayed(candidates, evidence.word.id)(evidence.wordFeedback)
 
   // The results of this are independent of guess-number, so may be a good candidate for caching?
   def possibleCandidateSetsIfCandidatePlayed(candidates: Candidates, playedCandidateId: WordId): Map[WordFeedback,Candidates]
+
+  def orderedCandidateOutlooksFor(h: Candidates): Seq[CandOutlook] = h.allWords.toSeq.map { t =>
+    CandOutlook(t, partitionForCandidateGiven(h.possibleWords, t))
+  }.sortBy(_.feedbackPartition.partition.evennessScore)
+
+  def partitionForCandidateGiven(possibleWords: WordSet, playedCandidateId: WordId): FeedbackPartition = {
+    val gridEntryForWord = grid(playedCandidateId)
+    feedbackPartitionPool.intern(possibleWords.groupBy(wordId => new WordFeedback(gridEntryForWord(wordId))))
+  }
 
   def wordsThatDoStillDiscriminate(
     possibleDiscriminators: Iterable[WordId], // Is it _best_ for it to be a WordSet?

@@ -1,9 +1,9 @@
 package com.madgag.wordle
 
-enum LetterFeedback(val character: Char, val emoji: String, val ansiColor: fansi.Attr) {
-  case Incorrect extends LetterFeedback('B',"⬜", fansi.Color.LightGray)
-  case Misplaced extends LetterFeedback('Y',"🟨", fansi.Color.Yellow)
-  case Correct   extends LetterFeedback('G',"🟩", fansi.Color.Green)
+enum LetterFeedback(val character: Char, val emoji: String, val ansiColor: fansi.Attr, jsName: String) {
+  case Incorrect extends LetterFeedback('B',"⬜", fansi.Color.LightGray, "absent")
+  case Misplaced extends LetterFeedback('Y',"🟨", fansi.Color.Yellow, jsName="present")
+  case Correct   extends LetterFeedback('G',"🟩", fansi.Color.Green, jsName="correct")
 }
 
 object LetterFeedback {

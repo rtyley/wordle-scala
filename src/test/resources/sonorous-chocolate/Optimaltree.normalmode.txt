@@ -1,4 +1,4 @@
-src/test/resources/sonorous-chocolate/Optimaltree.normalmode.txtsalet BBBBB1 courd BBBBB2 nymph BBBBY3 whiff GGGGG4
+salet BBBBB1 courd BBBBB2 nymph BBBBY3 whiff GGGGG4
                                 BGYYB3 pygmy GGGGG4
                                 BYBBB3 fizzy GGGGG4
                                              YGBBG4 jiffy GGGGG5

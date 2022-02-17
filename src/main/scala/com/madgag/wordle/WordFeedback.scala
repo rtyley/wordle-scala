@@ -32,6 +32,7 @@ object WordFeedback {
 
   val numValues: Int = LetterFeedback.values.length
   val CompleteSuccess: WordFeedback = WordFeedback(Seq.fill(WordLength)(Correct))
+  val CompletelyIncorrect: WordFeedback = WordFeedback(Seq.fill(WordLength)(Incorrect))
 
   def fromChars(str: String): WordFeedback = {
     require(str.length==WordLength)

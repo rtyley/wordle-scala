@@ -9,24 +9,30 @@ import com.madgag.wordle.WordFeedback.feedbackFor
 
 class WordFeedbackTest extends AnyWordSpec with Matchers {
   "WordFeedback" should {
-    "recognise success" in {
-      WordFeedback.CompleteSuccess.emojis shouldBe "🟩🟩🟩🟩🟩"
-
+    "represent the 5 letter-feedback values we get on a Wordle word" in {
       WordFeedback(Correct, Misplaced, Incorrect, Incorrect, Incorrect).emojis shouldBe "🟩🟨⬜⬜⬜"
-      WordFeedback(Correct, Correct, Correct, Correct, Incorrect).emojis shouldBe "🟩🟩🟩🟩⬜"
-      WordFeedback("⬜🟨⬜🟩⬜").emojis shouldBe "⬜🟨⬜🟩⬜"
-      WordFeedback("🟩⬜⬜⬜🟨").emojis shouldBe "🟩⬜⬜⬜🟨"
+      WordFeedback(Correct, Correct,   Correct,   Correct,   Incorrect).emojis shouldBe "🟩🟩🟩🟩⬜"
     }
 
-    "roundtrip" in {
-      val justGreenAtStart = Seq(Correct, Incorrect, Incorrect, Incorrect, Incorrect)
-      WordFeedback(justGreenAtStart).toSeq shouldBe justGreenAtStart
+    "round-trip emoji representation" in {
+      WordFeedback("⬜🟨⬜🟩⬜").emojis shouldBe "⬜🟨⬜🟩⬜"
+      WordFeedback("🟩⬜⬜⬜🟨").emojis shouldBe "🟩⬜⬜⬜🟨"
+      WordFeedback("🟩🟩⬜🟨⬜").emojis shouldBe "🟩🟩⬜🟨⬜"
+    }
+
+    "round-trip from a sequence of letter-feedback values to a single-byte representation" in {
+      val justOneGreenAtStart = Seq(Correct, Incorrect, Incorrect, Incorrect, Incorrect)
+      WordFeedback(justOneGreenAtStart).toSeq shouldBe justOneGreenAtStart
 
       val justTwoYellowAtStart = Seq(Misplaced, Misplaced, Incorrect, Incorrect, Incorrect)
       WordFeedback(justTwoYellowAtStart).toSeq shouldBe justTwoYellowAtStart
     }
 
-    "give good feedback on target word 'PERKY'" in {
+    "have a convenient 'success' value" in {
+      WordFeedback.CompleteSuccess.emojis shouldBe "🟩🟩🟩🟩🟩"
+    }
+
+    "correctly calculate expected word-feedback for candidate words against a target word" in {
       for ((candidateWord, expectedFeedback) <- Seq(
         "RAISE" -> "🟨⬜⬜⬜🟨",
         "PRANK" -> "🟩🟨⬜⬜🟨",

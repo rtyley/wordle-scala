@@ -21,6 +21,8 @@ class FeedbackPartition private[partition](
 ) extends pooling.Pooled(id) {
   require(feedbacks.size == partition.sets.size)
 
+  def wordSetByFeedback: Seq[(WordFeedback, WordSet)] = feedbacks.zip(partition.sets)
+
   //   override val hashCode: Int = sets.hashCode() // we rely on the hashcode a lot for `Set`s, so compute once...!
 
   override def equals(that: Any): Boolean = that match {

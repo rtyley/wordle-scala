@@ -32,6 +32,10 @@ sealed trait FeedbackTable(
   // The results of this are independent of guess-number, so may be a good candidate for caching?
   def possibleCandidateSetsIfCandidatePlayed(candidates: Candidates, playedCandidateId: WordId): Map[WordFeedback,Candidates]
 
+  def orderedCandidateOutlooksFromEntireCorpusGiven(possibleWords: WordSet): Seq[CandOutlook] = corpus.initialCandidates.allWords.map { t =>
+    CandOutlook(t, partitionForCandidateGiven(possibleWords, t))
+  }.toSeq.sortBy(_.feedbackPartition.partition.evennessScore)
+  
   def orderedCandidateOutlooksFor(h: Candidates): Seq[CandOutlook] = h.allWords.toSeq.map { t =>
     CandOutlook(t, partitionForCandidateGiven(h.possibleWords, t))
   }.sortBy(_.feedbackPartition.partition.evennessScore)

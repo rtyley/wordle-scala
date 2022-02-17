@@ -3,7 +3,6 @@ package com.madgag.wordle
 import com.google.common.io.Resources
 import com.madgag.wordle.Corpus.{Full, fromAsteriskFormat, getClass}
 import com.madgag.wordle.GameMode.Normal
-import com.madgag.wordle.PlayAnalysis.forGameMode
 import com.madgag.wordle.Strategy.Win
 import com.madgag.wordle.WordFeedback.fromChars
 import org.scalatest.EitherValues

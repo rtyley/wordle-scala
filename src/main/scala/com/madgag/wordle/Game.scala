@@ -1,13 +1,14 @@
 package com.madgag.wordle
 
 import com.madgag.wordle.Evidence.evidenceFrom
+import com.madgag.wordle.GameMode.Normal
 import com.madgag.wordle.approaches.tartan.*
 import com.madgag.wordle.wordsets.WordSet
 
 import scala.annotation.tailrec
 import scala.collection.immutable.SortedSet
 
-case class Game(targetWord: Word, gameMode: GameMode)(using val corpus: Corpus) {
+case class Game(targetWord: Word, gameMode: GameMode = Normal)(using val corpus: Corpus) {
   val feedbackTable: FeedbackTable = FeedbackTable.obtainFor(gameMode)
 
   val targetWordId: WordId = targetWord.id
@@ -15,6 +16,8 @@ case class Game(targetWord: Word, gameMode: GameMode)(using val corpus: Corpus) 
   private val initialPermittedWords: WordSet = WordSet.fromKnownDistinct(corpus.initialCandidates.allWords)
 
   val start: State = State(Seq.empty, initialPermittedWords)
+
+  def playWith(wordlePlayer: WordlePlayer) = start.playWith(wordlePlayer)
 
   case class State(playedWords: Seq[Word], permittedWords: WordSet) {
 

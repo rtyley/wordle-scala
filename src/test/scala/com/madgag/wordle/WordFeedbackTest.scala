@@ -32,6 +32,10 @@ class WordFeedbackTest extends AnyWordSpec with Matchers {
       WordFeedback.CompleteSuccess.emojis shouldBe "🟩🟩🟩🟩🟩"
     }
 
+    "calculate feedback for a candidate against a target word!" in {
+      feedbackFor("sassy", "grass").emojis shouldBe "🟨🟨⬜🟩⬜"
+    }
+
     "correctly calculate expected word-feedback for candidate words against a target word" in {
       for ((candidateWord, expectedFeedback) <- Seq(
         "RAISE" -> "🟨⬜⬜⬜🟨",
@@ -48,6 +52,18 @@ class WordFeedbackTest extends AnyWordSpec with Matchers {
     "do examples found in http://sonorouschocolate.com/notes/index.php?title=The_best_strategies_for_Wordle" in {
       feedbackFor("SILLY", "HOTEL").emojis shouldBe "⬜⬜🟨⬜⬜"
       feedbackFor("SILLY", "DAILY").emojis shouldBe "⬜🟨⬜🟩🟩"
+    }
+
+    "be useful in working out what words are possible" in {
+      val corpus = Corpus.Full
+      val firstGuess = "early"
+      val feedbackForFirstGuess = WordFeedback("🟨⬜⬜🟩⬜")
+
+      val wordsThatWouldGiveIdenticalFeedback: Set[Word] = corpus.commonWords.filter(possibleWord =>
+        feedbackFor(firstGuess, possibleWord) == feedbackForFirstGuess
+      )
+
+      wordsThatWouldGiveIdenticalFeedback.size shouldBe 30
     }
   }
 }

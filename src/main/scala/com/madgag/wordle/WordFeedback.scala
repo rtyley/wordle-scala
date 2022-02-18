@@ -65,25 +65,50 @@ object WordFeedback {
   }
 
   def feedbackFor(candidate: Word, actual: Word): WordFeedback = {
-    val (correctIndices, incorrectIndices) = WordIndices.partition(index => candidate(index) == actual(index))
-    val misplacedLetterIndices = incorrectIndices.foldLeft(AvailableAndMisplacedLetters(
-      remainingActualLetters = incorrectIndices.map(actual).groupUp(identity)(_.size))
-    ) {
-      case (availableAndMisplacedLetters, incorrectIndex) => availableAndMisplacedLetters.attemptTake(candidate(incorrectIndex), incorrectIndex)
-    }.misplacedLetterIndices
+    // State used in the fold, _1 is the actual result, _2 is a set of
+    // characters already identified as misplaced in the past. If a char was 
+    // identified as misplaced, if it appears again a wrong position, it is
+    // treated as missing
+    type FoldState = (Vector[LetterFeedback], Set[Letter])
 
-    val letterFeedbackByIndex =
-      (correctIndices.map(_ -> Correct) ++ misplacedLetterIndices.map(_ -> Misplaced)).toMap.withDefaultValue(Incorrect)
-    WordFeedback(WordIndices.map(letterFeedbackByIndex))
-  }
-
-  case class AvailableAndMisplacedLetters(remainingActualLetters: Map[Letter, Int], misplacedLetterIndices: Set[Int] = Set.empty) {
-    def attemptTake(letter: Letter, letterIndex: Int): AvailableAndMisplacedLetters = {
-      val quantityOfLetterAvailable = remainingActualLetters.getOrElse(letter, 0)
-      if (quantityOfLetterAvailable <= 0) this else AvailableAndMisplacedLetters(
-        remainingActualLetters.updated(letter, quantityOfLetterAvailable - 1),
-        misplacedLetterIndices + letterIndex
-      )
+    // Makes a map of letters and their frequency
+    val baseCharMap = actual.foldLeft(Map[Letter, Int]()) { (m, c) =>
+      m.updatedWith(c) {
+        _.map(_ + 1).orElse(Some(1))
+      }
     }
+
+    // Removes from the map letters that have correct occurrences. That way
+    // when we look them up, they're not considered missing, even if they appear
+    // in the end of the word.
+    val charMap = actual.zip(candidate).filter(_ == _).map(_._1)
+      .foldLeft(baseCharMap) { (map, c) =>
+        map.updatedWith(c)(_.map(_ - 1))
+      }
+
+    // Folds over a zip of both words, assigning status for which one of the
+    // pairs
+    def updateState(state: FoldState, pair: (Letter, Letter)): FoldState = {
+      val (feedback, misplaced) = state
+      val (x, y) = pair
+
+      if (x == y) {
+        (feedback :+ Correct, misplaced)
+      } else if (misplaced.contains(x)) {
+        (feedback :+ Incorrect, misplaced)
+      } else if (charMap.getOrElse(x, 0) > 0) {
+        (feedback :+ Misplaced, misplaced + x)
+      } else {
+        (feedback :+ Incorrect, misplaced)
+      }
+    }
+
+    // Does the fold and produces the result
+    val result =
+      candidate.zip(actual).foldLeft(
+        (Vector() -> Set()) : FoldState
+      )(updateState)._1
+
+    WordFeedback(result)
   }
 }

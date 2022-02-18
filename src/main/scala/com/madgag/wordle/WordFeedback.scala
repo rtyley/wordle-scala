@@ -4,6 +4,8 @@ import com.madgag.scala.collection.decorators.*
 import com.madgag.wordle.LetterFeedback.*
 import com.madgag.wordle.Wordle.{Letter, WordIndices, WordLength}
 
+import scala.collection.immutable.Queue
+
 class WordFeedback(val underlying: Byte) extends AnyVal {
   def toSeq: Seq[LetterFeedback] = {
     var u: Int = underlying & 0xff
@@ -64,26 +66,27 @@ object WordFeedback {
     )
   }
 
-  def feedbackFor(candidate: Word, actual: Word): WordFeedback = {
-    val (correctIndices, incorrectIndices) = WordIndices.partition(index => candidate(index) == actual(index))
-    val misplacedLetterIndices = incorrectIndices.foldLeft(AvailableAndMisplacedLetters(
-      remainingActualLetters = incorrectIndices.map(actual).groupUp(identity)(_.size))
-    ) {
-      case (availableAndMisplacedLetters, incorrectIndex) => availableAndMisplacedLetters.attemptTake(candidate(incorrectIndex), incorrectIndex)
-    }.misplacedLetterIndices
+  case class FeedbackBuilder(feedback: Queue[LetterFeedback] = Queue.empty, availableMisplaced: Map[Letter, Int]) {
+    def compare(guessLetter: Letter, correctLetter: Letter): FeedbackBuilder =
+      if (guessLetter == correctLetter) add(Correct) else availableMisplaced(guessLetter) match {
+        case 0 => add(Incorrect)
+        case available => add(Misplaced, availableMisplaced.updated(guessLetter, available - 1))
+      }
 
-    val letterFeedbackByIndex =
-      (correctIndices.map(_ -> Correct) ++ misplacedLetterIndices.map(_ -> Misplaced)).toMap.withDefaultValue(Incorrect)
-    WordFeedback(WordIndices.map(letterFeedbackByIndex))
+    private def add(
+      letterFeedback: LetterFeedback,
+      updatedAvailableMisplaced: Map[Letter, Int] = availableMisplaced
+    ) = copy(feedback = feedback :+ letterFeedback, availableMisplaced = updatedAvailableMisplaced)
   }
 
-  case class AvailableAndMisplacedLetters(remainingActualLetters: Map[Letter, Int], misplacedLetterIndices: Set[Int] = Set.empty) {
-    def attemptTake(letter: Letter, letterIndex: Int): AvailableAndMisplacedLetters = {
-      val quantityOfLetterAvailable = remainingActualLetters.getOrElse(letter, 0)
-      if (quantityOfLetterAvailable <= 0) this else AvailableAndMisplacedLetters(
-        remainingActualLetters.updated(letter, quantityOfLetterAvailable - 1),
-        misplacedLetterIndices + letterIndex
-      )
-    }
+  def feedbackFor(candidate: Word, actual: Word): WordFeedback = {
+    val guessWithActual = candidate.zip(actual)
+
+    WordFeedback(guessWithActual.foldLeft(FeedbackBuilder(
+      availableMisplaced = guessWithActual.foldLeft(Map.empty.withDefaultValue(0)) {
+        case (acc, (guessLetter, actualLetter)) => if (guessLetter == actualLetter) acc else {
+          acc.updated(actualLetter, acc(actualLetter) + 1)
+        }})
+    )(_.compare.tupled(_)).feedback)
   }
 }

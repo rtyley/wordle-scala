@@ -12,6 +12,8 @@ case class Evidence(word: Word, wordFeedback: WordFeedback) {
   val ansiColouredString: fansi.Str = (for ((attr, char) <- wordFeedback.toSeq.map(_.ansiColor).zip(word)) yield {
     attr(char.toString)
   }).reduce(_ ++ _)
+  
+  val plainText: String = word+"-"+wordFeedback.characters
 
   val isSuccess: Boolean = wordFeedback.isSuccess
 

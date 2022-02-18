@@ -1,5 +1,6 @@
 package com.madgag.wordle.wordsets.partition
 
+import com.madgag.wordle.*
 import com.madgag.wordle.WordFeedback
 import com.madgag.wordle.pooling
 import com.madgag.wordle.wordsets.WordSet
@@ -26,5 +27,12 @@ class FeedbackPartition private[partition](
   override def equals(that: Any): Boolean = that match {
     case p: FeedbackPartition if p.id == id => true
     case _ => super.equals(that)
+  }
+
+  def feedbackWithWords: Seq[(WordFeedback, WordSet)] = feedbacks.zip(partition.sets)
+
+  def asCSV(using Corpus): Seq[String] = {
+    for ((feedback, words) <-feedbackWithWords.sortBy(p => (-p._2.size, - p._1.underlying))) yield
+      Seq(feedback.emojis, words.size, words.map(_.asWord).mkString(" ")).mkString(",")
   }
 }

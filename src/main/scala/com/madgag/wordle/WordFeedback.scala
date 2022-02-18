@@ -18,6 +18,11 @@ class WordFeedback(val underlying: Byte) extends AnyVal {
 
   def isSuccess: Boolean = toSeq.forall(_ == Correct)
 
+  def misplacedAndCorrectIndicies: (Seq[Int], Seq[Int]) = {
+    val s = toSeq
+    (WordIndices.filter(s(_) == Misplaced), WordIndices.filter(s(_) == Correct))
+  }
+
   override def toString: Word = emojis
 }
 

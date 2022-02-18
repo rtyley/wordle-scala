@@ -23,6 +23,8 @@ case class Corpus(commonWords: SortedSet[Word], uncommonWords: SortedSet[Word]) 
   val commonWordsOrdered: IndexedSeq[Word] = commonWords.toIndexedSeq.sorted
   val allWordsOrdered: IndexedSeq[Word]  = commonWordsOrdered ++ uncommonWords.toIndexedSeq
 
+  def contains(word: Word) = commonWords.contains(word) || uncommonWords.contains(word)
+
   val hash: Int = MurmurHash3.orderedHashing.hash(allWordsOrdered)
 
   val id: String = s"corpus-${commonWords.size}-of-${allWordsOrdered.size}-words__${hash.toHexString.toUpperCase}"

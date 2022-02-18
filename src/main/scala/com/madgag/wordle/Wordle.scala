@@ -10,12 +10,16 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.jdk.CollectionConverters.*
 
+type Letter = Char
 type Word = String
 type WordId = Short
 val MaxGuesses = 6
 
 extension (word: Word)
   def id(using c: Corpus): WordId = c.idFor(word)
+
+extension (letters: Seq[Letter])
+  def letterFrequency: Map[Letter, Int] = letters.groupUp(identity)(_.size).withDefaultValue(0)
 
 extension (wordId: WordId)
   def asWord(using c: Corpus): Word = c.allWordsOrdered(wordId)

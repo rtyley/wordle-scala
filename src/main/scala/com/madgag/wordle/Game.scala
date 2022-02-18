@@ -31,16 +31,15 @@ case class Game(targetWord: Word, gameMode: GameMode = Normal)(using val corpus:
 
     def play(word: Word): Either[WordNotPlayable, State] = checkWordNotPlayable(word).toLeft(State(playedWords :+ word))
 
-    def playWith(wordlePlayer: WordlePlayer): State = playWith(evidenceSoFar.foldLeft(wordlePlayer.start) {
+    def playWith(wordlePlayer: WordlePlayer): Either[WordNotPlayable, State] = playWith(evidenceSoFar.foldLeft(wordlePlayer.start) {
       case (player, evidence) => player.updateWith(evidence)
     })
 
-    @tailrec
-    private def playWith(playerState: WordlePlayer.State): State = {
-      val updatedGameState: State = play(playerState.move).toOption.get
-      val resultingEvidence = updatedGameState.evidenceSoFar.last
-      if (updatedGameState.shouldStopNow) updatedGameState else
-        updatedGameState.playWith(playerState.updateWith(resultingEvidence))
+    private def playWith(playerState: WordlePlayer.State): Either[WordNotPlayable, State] = {
+      play(playerState.move).flatMap { newGameState =>
+        if (newGameState.shouldStopNow) Right(newGameState) else
+          newGameState.playWith(playerState.updateWith(newGameState.mostRecentEvidence.get))
+      }
     }
 
     lazy val text: String = {
@@ -57,7 +56,7 @@ object Game {
 
   def totalGuessSumFor(wordlePlayer: WordlePlayer, gameMode: GameMode)(using corpus: Corpus): Int = {
     corpus.commonWords.toSeq.map { targetWord =>
-      val endGameState = Game(targetWord, gameMode).start.playWith(wordlePlayer)
+      val endGameState = Game(targetWord, gameMode).start.playWith(wordlePlayer).toOption.get
       require(endGameState.isSuccess)
       endGameState.guessesTaken
     }.sum

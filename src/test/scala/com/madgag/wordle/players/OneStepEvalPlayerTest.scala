@@ -12,7 +12,7 @@ class OneStepEvalPlayerTest extends AnyFlatSpec with Matchers with EitherValues 
     given corpus: Corpus = Full
     val player: WordlePlayer = OneStepEvalPlayer.playing(Normal)
 
-    println(Game(corpus.commonWords.head, Normal).start.playWith(player).text)
+    println(Game(corpus.commonWords.head, Normal).start.playWith(player).value.text)
 
     val rootChoice = Strategy.fromPlayer(player, Normal)
 

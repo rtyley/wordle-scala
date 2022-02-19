@@ -36,6 +36,16 @@ class WordFeedbackTest extends AnyWordSpec with Matchers {
       feedbackFor("sassy", "grass").emojis shouldBe "🟨🟨⬜🟩⬜"
     }
 
+    "correctly handle multiple mis-placements of the same letter" in {
+      feedbackFor("aarst", "xyzaa").emojis shouldBe "🟨🟨⬜⬜⬜"
+
+      feedbackFor("teeth", "ether").emojis shouldBe "🟨🟨🟨⬜🟨"
+      feedbackFor("ether", "teeth").emojis shouldBe "🟨🟨🟨🟨⬜"
+
+      feedbackFor("aabbc", "bbcaa").emojis shouldBe "🟨🟨🟨🟨🟨"
+      feedbackFor("bbcaa", "aabbc").emojis shouldBe "🟨🟨🟨🟨🟨"
+    }
+
     "correctly calculate expected word-feedback for candidate words against a target word" in {
       for ((candidateWord, expectedFeedback) <- Seq(
         "RAISE" -> "🟨⬜⬜⬜🟨",

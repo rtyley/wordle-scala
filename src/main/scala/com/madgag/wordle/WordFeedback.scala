@@ -66,7 +66,7 @@ object WordFeedback {
     )
   }
 
-  case class FeedbackBuilder(feedback: Queue[LetterFeedback] = Queue.empty, availableMisplaced: Map[Letter, Int]) {
+  case class FeedbackBuilder(feedback: Queue[LetterFeedback] = Queue.empty, availableMisplaced: FrequencyMap[Letter]) {
     def compare(guessLetter: Letter, correctLetter: Letter): FeedbackBuilder =
       if (guessLetter == correctLetter) add(Correct) else availableMisplaced(guessLetter) match {
         case 0 => add(Incorrect)
@@ -75,7 +75,7 @@ object WordFeedback {
 
     private def add(
       letterFeedback: LetterFeedback,
-      updatedAvailableMisplaced: Map[Letter, Int] = availableMisplaced
+      updatedAvailableMisplaced: FrequencyMap[Letter] = availableMisplaced
     ) = copy(feedback = feedback :+ letterFeedback, availableMisplaced = updatedAvailableMisplaced)
   }
 
@@ -83,10 +83,8 @@ object WordFeedback {
     val guessWithActual = candidate.zip(actual)
 
     WordFeedback(guessWithActual.foldLeft(FeedbackBuilder(
-      availableMisplaced = guessWithActual.foldLeft(Map.empty.withDefaultValue(0)) {
-        case (acc, (guessLetter, actualLetter)) => if (guessLetter == actualLetter) acc else {
-          acc.updated(actualLetter, acc(actualLetter) + 1)
-        }})
-    )(_.compare.tupled(_)).feedback)
+      availableMisplaced = guessWithActual.foldLeft(FrequencyMap.empty) {
+        case (freqMap, (guessLetter, actualLetter)) => freqMap.incrementIf(guessLetter != actualLetter)(actualLetter)
+    }))(_.compare.tupled(_)).feedback)
   }
 }

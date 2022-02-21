@@ -13,9 +13,9 @@ class SpectatorAnalystTest extends AnyFlatSpec {
 
   it should "play Wordles" in {
     val analyst = SpectatorAnalyst(Normal)
-    analyst.writeOutCsvFor(Seq(Evidence("grain", WordFeedback("⬜🟩🟩⬜⬜"))), "draft")
+    analyst.writeOutCsvFor(Seq(Evidence("grain", fb"⬜🟩🟩⬜⬜")), "draft")
 
-    analyst.writeOutCsvFor(Seq(Evidence("grain", WordFeedback("⬜🟩🟩⬜⬜"))), "celts")
+    analyst.writeOutCsvFor(Seq(Evidence("grain", fb"⬜🟩🟩⬜⬜")), "celts")
 
   }
 }

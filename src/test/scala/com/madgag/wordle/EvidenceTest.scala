@@ -14,13 +14,13 @@ class EvidenceTest extends AnyFlatSpec with Matchers with EitherValues {
   }
 
   it should "be useful in working out what words are possible" in {
-    val evidence = Evidence("early", WordFeedback("🟨⬜⬜🟩⬜"))
+    val evidence = Evidence("early", fb"🟨⬜⬜🟩⬜")
 
     Corpus.Full.commonWords.count(_.compliesWith(evidence)) shouldBe 30
   }
 
   it should "be able to work out the prospects of 'draft' after 'grain' gets two greens" in {
-    val evidence = Evidence("grain", WordFeedback("⬜🟩🟩⬜⬜"))
+    val evidence = Evidence("grain", fb"⬜🟩🟩⬜⬜")
 
     val possibleWordsAfter1stGuess: Set[Word] = Corpus.Full.commonWords.filter(_.compliesWith(evidence))
 

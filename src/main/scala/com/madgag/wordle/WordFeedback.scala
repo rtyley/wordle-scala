@@ -4,6 +4,8 @@ import com.madgag.scala.collection.decorators.*
 import com.madgag.wordle.LetterFeedback.*
 import com.madgag.wordle.WordFeedback.Calculation.BlankCensus
 import com.madgag.wordle.Wordle.{Letter, WordIndices, WordLength}
+import org.typelevel.literally.Literally
+import scala.util.*
 
 import scala.collection.immutable.Queue
 
@@ -115,3 +117,12 @@ object WordFeedback {
     }
   }
 }
+
+extension (inline ctx: StringContext)
+  inline def fb(inline args: Any*): WordFeedback = ${WordFeedbackLiteral('ctx, 'args)}
+
+object WordFeedbackLiteral extends Literally[WordFeedback]:
+  def validate(s: String)(using Quotes): Either[String, Expr[WordFeedback]] = Try(WordFeedback(s)) match {
+    case Success(wordFeedback) => Right('{new WordFeedback(${Expr(wordFeedback.underlying)})})
+    case Failure(_) => Left(s"Must be ${Wordle.WordLength} of these emoji: ${LetterFeedback.values.map(_.emoji).mkString}")
+  }

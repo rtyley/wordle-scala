@@ -14,7 +14,7 @@ class GameModeTest extends AnyFlatSpec with Matchers with OptionValues {
   it should "enforce a required correct letter just like official Wordle" in {
     import GameMode.Hard.checkConstraintsFor
 
-    val gottaStartWithAnO = Evidence("offal", WordFeedback("🟩⬜⬜⬜⬜"))
+    val gottaStartWithAnO = Evidence("offal", fb"🟩⬜⬜⬜⬜")
 
     checkConstraintsFor("bogus")(gottaStartWithAnO).value shouldBe NotValidInHardMode(NthLetterMustBe(0, 'o'))
     checkConstraintsFor("oasis")(gottaStartWithAnO) shouldBe None
@@ -23,7 +23,7 @@ class GameModeTest extends AnyFlatSpec with Matchers with OptionValues {
   it should "enforce a required letter just like official Wordle" in {
     import GameMode.Hard.checkConstraintsFor
 
-    val gottaStartWithAnOAndHaveAT = Evidence("octal", WordFeedback("🟩⬜🟨⬜⬜"))
+    val gottaStartWithAnOAndHaveAT = Evidence("octal", fb"🟩⬜🟨⬜⬜")
 
     checkConstraintsFor("oasis")(gottaStartWithAnOAndHaveAT).value shouldBe NotValidInHardMode(MustContain('t'))
     checkConstraintsFor("total")(gottaStartWithAnOAndHaveAT).value shouldBe NotValidInHardMode(NthLetterMustBe(0, 'o'))

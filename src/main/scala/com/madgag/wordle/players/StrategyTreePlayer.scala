@@ -32,7 +32,7 @@ case class StrategyTreePlayer(rootChoice: Node.Choice) {
       lazy val move: Word = currentChoice.wordId.asWord
 
       def updateWith(evidence: Evidence): State = {
-        require(evidence.word.id == currentChoice.wordId)
+        require(evidence.guess.id == currentChoice.wordId)
         State(currentChoice.x(evidence.wordFeedback).asInstanceOf[Node.Choice])
       }
     }

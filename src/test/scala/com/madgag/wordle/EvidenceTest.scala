@@ -26,15 +26,15 @@ class EvidenceTest extends AnyFlatSpec with Matchers with EitherValues {
 
     println(s"There are ${possibleWordsAfter1stGuess.size} possible target words after '$evidence'\n")
 
-    
-//    val guess2: Word = "draft"
-//
-//    val possibleWordsGroupedByFeedback: Map[WordFeedback, Set[Word]] =
-//      possibleWordsAfter1stGuess.groupBy(possibleWord => feedbackFor(guess2, possibleWord))
-//
-//    println(s"There are ${possibleWordsGroupedByFeedback.size} differing feedbacks possible after 2nd guess '$guess2'\n")
-//
-//    println(possibleWordsGroupedByFeedback)
+
+    val guess2: Word = "draft"
+
+    val possibleWordsGroupedByFeedback: Map[WordFeedback, Set[Word]] =
+      possibleWordsAfter1stGuess.groupBy(possibleWord => feedbackFor(guess2, possibleWord))
+
+    println(s"There are ${possibleWordsGroupedByFeedback.size} differing feedbacks possible after 2nd guess '$guess2'\n")
+
+    println(possibleWordsGroupedByFeedback)
 
   }
 }

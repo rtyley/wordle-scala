@@ -27,7 +27,7 @@ sealed trait FeedbackTable(
   def updatedPermittedWordsGiven(permittedWords: WordSet, wordId: WordId, wordFeedback: WordFeedback): WordSet
 
   def update(candidates: Candidates, evidence: Evidence): Candidates =
-    possibleCandidateSetsIfCandidatePlayed(candidates, evidence.word.id)(evidence.wordFeedback)
+    possibleCandidateSetsIfCandidatePlayed(candidates, evidence.guess.id)(evidence.wordFeedback)
 
   // The results of this are independent of guess-number, so may be a good candidate for caching?
   def possibleCandidateSetsIfCandidatePlayed(candidates: Candidates, playedCandidateId: WordId): Map[WordFeedback,Candidates]

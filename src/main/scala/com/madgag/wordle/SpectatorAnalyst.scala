@@ -18,7 +18,7 @@ case class SpectatorAnalyst(gameMode: GameMode)(using corpus: Corpus) {
     val possWords = evidenceSoFar.foldLeft(corpus.initialCandidates.possibleWords) {
       case (possibleWords, evidence) =>
         println(s"Has candidate $candidate: "+possibleWords.contains(candidateId))
-        val feedbackPartition = feedbackTable.partitionForCandidateGiven(possibleWords, evidence.word.id)
+        val feedbackPartition = feedbackTable.partitionForCandidateGiven(possibleWords, evidence.guess.id)
         val wordSet = feedbackPartition.feedbackWithWords.toMap.apply(evidence.wordFeedback)
         println(s"wordSet ${wordSet.size} ${wordSet.contains(candidateId)}")
         wordSet
@@ -47,7 +47,7 @@ case class VisibleState(evidenceSoFar: Seq[Evidence], nextGuess: Option[Word] = 
   def javascriptCommands: String = {
     val indiciesToClear = (evidenceSoFar.size + nextGuess.size) until 6
     ((for ((evidence, rowIndex) <- evidenceSoFar.zipWithIndex) yield {
-      s"setEvidence($rowIndex, '${evidence.word}', '${evidence.wordFeedback.characters}');"
+      s"setEvidence($rowIndex, '${evidence.guess}', '${evidence.wordFeedback.characters}');"
     }) ++ nextGuess.map(word => s"setWord(${evidenceSoFar.size}, '$word');") ++ indiciesToClear.map(index => s"setWord($index, '');")).mkString
   }
 }

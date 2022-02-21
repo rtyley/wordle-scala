@@ -2,6 +2,7 @@ package com.madgag.wordle
 
 import com.madgag.scala.collection.decorators.*
 import com.madgag.wordle.LetterFeedback.*
+import com.madgag.wordle.WordFeedback.Calculation.BlankCensus
 import com.madgag.wordle.Wordle.{Letter, WordIndices, WordLength}
 
 import scala.collection.immutable.Queue
@@ -44,7 +45,7 @@ object WordFeedback {
     require(str.length==WordLength)
     apply(str.map(LetterFeedback.fromCharacter))
   }
-  
+
   def apply(emojiString: String): WordFeedback = {
     def feedbackOnString(str: String): List[LetterFeedback] = if (str.isEmpty) Nil else {
       val lf = LetterFeedback.atStartOfString(str)
@@ -66,25 +67,51 @@ object WordFeedback {
     )
   }
 
-  case class FeedbackBuilder(feedback: Queue[LetterFeedback] = Queue.empty, availableMisplaced: FrequencyMap[Letter]) {
-    def compare(guessLetter: Letter, correctLetter: Letter): FeedbackBuilder =
-      if (guessLetter == correctLetter) add(Correct) else availableMisplaced(guessLetter) match {
-        case 0 => add(Incorrect)
-        case available => add(Misplaced, availableMisplaced.updated(guessLetter, available - 1))
+  def feedbackFor(guess: Word, actual: Word): WordFeedback =
+    guess.zip(actual).foldLeft(BlankCensus)(_.compare.tupled(_)).wordFeedback
+
+  object Calculation {
+    
+    /**
+     * State for 1st pass over Wordle letters, which accomplishes two things:
+     *  - Delineates whether guess letters are correct or not
+     *  - Counts letters from the actual answer word that ''aren't'' correct, and so will be available to mark
+     *    'misplaced' guess-letters in the 2nd pass.
+     *
+     * @param nonCorrects For each guess-letter: `None` if letter was correct, otherwise populated with the guess-letter
+     */
+    case class Census(nonCorrects: Queue[Option[Letter]], availableMisplaced: FrequencyMap[Letter]) {
+      def compare(guessLetter: Letter, actualLetter: Letter): Census = {
+        val notCorrect = guessLetter != actualLetter
+        Census(
+          nonCorrects = nonCorrects :+ Option.when(notCorrect)(guessLetter),
+          availableMisplaced.incrementIf(notCorrect)(actualLetter)
+        )
       }
 
-    private def add(
-      letterFeedback: LetterFeedback,
-      updatedAvailableMisplaced: FrequencyMap[Letter] = availableMisplaced
-    ) = copy(feedback = feedback :+ letterFeedback, availableMisplaced = updatedAvailableMisplaced)
-  }
+      def wordFeedback: WordFeedback = // perform 2nd pass over Wordle letters
+        WordFeedback(nonCorrects.foldLeft(Builder(availableMisplaced))(_ process _).feedback)
+    }
 
-  def feedbackFor(candidate: Word, actual: Word): WordFeedback = {
-    val guessWithActual = candidate.zip(actual)
+    val BlankCensus: Census = Census(Queue.empty, FrequencyMap.empty)
 
-    WordFeedback(guessWithActual.foldLeft(FeedbackBuilder(
-      availableMisplaced = guessWithActual.foldLeft(FrequencyMap.empty) {
-        case (freqMap, (guessLetter, actualLetter)) => freqMap.incrementIf(guessLetter != actualLetter)(actualLetter)
-    }))(_.compare.tupled(_)).feedback)
+    /**
+     * State for 2nd pass over Wordle letters: builds the sequence of letter-feedback, decreasing the count of
+     * available misplaced letters as it expends them to mark guess-letters as 'misplaced'.
+     */
+    private case class Builder(availableMisplaced: FrequencyMap[Letter], feedback: Queue[LetterFeedback] = Queue.empty) {
+      /**
+       * @param nonCorrectGuess `None` if the guess-letter was correct, otherwise populated with the guess-letter
+       */
+      def process(nonCorrectGuess: Option[Letter]): Builder = nonCorrectGuess.fold(add(Correct)) { guessLetter =>
+        availableMisplaced(guessLetter) match {
+          case 0 => add(Incorrect)
+          case available => add(Misplaced, availableMisplaced.updated(guessLetter, available - 1))
+        }
+      }
+
+      private def add(lf: LetterFeedback, updatedMisplaced: FrequencyMap[Letter] = availableMisplaced) =
+        copy(feedback = feedback :+ lf, availableMisplaced = updatedMisplaced)
+    }
   }
 }

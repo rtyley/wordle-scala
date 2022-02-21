@@ -18,9 +18,9 @@ case class Evidence(guess: Word, wordFeedback: WordFeedback) {
   val isSuccess: Boolean = wordFeedback.isSuccess
 
   lazy val summary: Summary = {
-    val (misplacedIndicies, knownCorrectIndices) = wordFeedback.misplacedAndCorrectIndicies
+    val (misplacedIndices, knownCorrectIndices) = wordFeedback.misplacedAndCorrectIndices
     Summary(
-      misplacedLetters = misplacedIndicies.map(guess).letterFrequency,
+      misplacedLetters = misplacedIndices.map(guess).letterFrequency,
       correctLettersByIndex = SortedMap.from(knownCorrectIndices.map(index => index -> guess(index)))
     )
   }
@@ -35,7 +35,7 @@ object Evidence {
     def compliesWith(evidence: Evidence): Boolean = feedbackFor(evidence.guess, word) == evidence.wordFeedback
 
 
-  case class Summary(misplacedLetters: Map[Letter, Int], correctLettersByIndex: SortedMap[Int, Letter]) {
+  case class Summary(misplacedLetters: FrequencyMap[Letter], correctLettersByIndex: SortedMap[Int, Letter]) {
     val indicesWhichAreNotCorrect: Seq[Int] = WordIndices.filter(!correctLettersByIndex.contains(_))
   }
 }

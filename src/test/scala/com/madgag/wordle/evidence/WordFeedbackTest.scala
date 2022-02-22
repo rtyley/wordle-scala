@@ -1,11 +1,13 @@
-package com.madgag.wordle
+package com.madgag.wordle.evidence
 
-import com.madgag.wordle.Evidence.evidenceFrom
+import com.madgag.wordle.*
+import com.madgag.wordle.evidence.*
+import com.madgag.wordle.evidence.Evidence.*
+import com.madgag.wordle.evidence.LetterFeedback.*
+import com.madgag.wordle.evidence.WordFeedback.feedbackFor
 import org.scalatest.Inspectors
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import com.madgag.wordle.LetterFeedback.*
-import com.madgag.wordle.WordFeedback.feedbackFor
 
 class WordFeedbackTest extends AnyWordSpec with Matchers {
   "WordFeedback" should {

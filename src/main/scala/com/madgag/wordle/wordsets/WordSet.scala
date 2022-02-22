@@ -2,13 +2,13 @@ package com.madgag.wordle.wordsets
 
 import com.madgag.wordle.*
 
+import java.util.concurrent.ConcurrentHashMap
 import scala.Array.emptyShortArray
 import scala.collection.BitSetOps.WordLength
-import scala.collection.{IterableOnce, SpecificIterableFactory}
 import scala.collection.Stepper.EfficientSplit
-import scala.collection.mutable.{BitSet, Builder}
-import java.util.concurrent.ConcurrentHashMap
 import scala.collection.immutable.{AbstractSet, BitSet, SortedSet, SortedSetOps, StrictOptimizedSortedSetOps}
+import scala.collection.mutable.{BitSet, Builder}
+import scala.collection.{IterableOnce, SpecificIterableFactory}
 
 /** Base implementation type of WordSets */
 trait WordSetOps[+C <: WordSet with WordSetOps[C]]

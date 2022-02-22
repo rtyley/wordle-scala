@@ -1,5 +1,7 @@
 package com.madgag.wordle
 
+import com.madgag.wordle.evidence.Evidence
+
 trait WordlePlayer {
   def start: WordlePlayer.State
 }

@@ -1,10 +1,10 @@
 package com.madgag.wordle.approaches.tartan
 
-import scala.collection.immutable.SortedSet
 import com.madgag.wordle.*
 import com.madgag.wordle.wordsets.WordSet
 
 import java.util.concurrent.atomic.{AtomicInteger, AtomicLong, LongAdder}
+import scala.collection.immutable.SortedSet
 import scala.math.Ordering
 
 object Candidates {

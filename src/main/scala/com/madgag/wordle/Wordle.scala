@@ -1,8 +1,8 @@
 package com.madgag.wordle
 
 import com.madgag.scala.collection.decorators.*
-import com.madgag.wordle.LetterFeedback.*
-import com.madgag.wordle.WordFeedback.CompleteSuccess
+import com.madgag.wordle.evidence.LetterFeedback.*
+import com.madgag.wordle.evidence.WordFeedback.CompleteSuccess
 
 import java.nio.file.{Files, Path, Paths}
 import scala.collection.immutable.{BitSet, SortedMap}

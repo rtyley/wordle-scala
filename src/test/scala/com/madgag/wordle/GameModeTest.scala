@@ -5,6 +5,7 @@ import com.madgag.wordle.Game.WordNotPlayable.NotValidInHardMode
 import com.madgag.wordle.GameMode.Hard.PlayConstraint.*
 import com.madgag.wordle.GameMode.Normal
 import com.madgag.wordle.PlayAnalysis.forGameMode
+import com.madgag.wordle.evidence.*
 import org.scalatest.EitherValues
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.{EitherValues, OptionValues}
@@ -23,7 +24,7 @@ class GameModeTest extends AnyFlatSpec with Matchers with OptionValues {
   it should "enforce a required letter just like official Wordle" in {
     import GameMode.Hard.checkConstraintsFor
 
-    val gottaStartWithAnOAndHaveAT = Evidence("octal", fb"🟩⬜🟨⬜⬜")
+    val gottaStartWithAnOAndHaveAT = evidence.Evidence("octal", fb"🟩⬜🟨⬜⬜")
 
     checkConstraintsFor("oasis")(gottaStartWithAnOAndHaveAT).value shouldBe NotValidInHardMode(MustContain('t'))
     checkConstraintsFor("total")(gottaStartWithAnOAndHaveAT).value shouldBe NotValidInHardMode(NthLetterMustBe(0, 'o'))

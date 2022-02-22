@@ -2,6 +2,7 @@ package com.madgag.wordle.strategy_files
 
 import com.madgag.wordle.*
 import com.madgag.wordle.Wordle.WordLength
+import com.madgag.wordle.evidence.WordFeedback
 
 case class Line(
   guessIndexForHeadFeedbackOrRootWordId: Either[Int,WordId],

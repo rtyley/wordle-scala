@@ -1,9 +1,9 @@
 package com.madgag.wordle.players
 
-import com.madgag.wordle.*
-import com.madgag.wordle.Evidence.*
-import com.madgag.wordle.{Corpus, Evidence, GameMode, WordlePlayer}
 import com.madgag.wordle.approaches.tartan.{Candidates, FeedbackTable}
+import com.madgag.wordle.evidence.Evidence
+import com.madgag.wordle.evidence.Evidence.*
+import com.madgag.wordle.*
 
 object PlayFirstPossibleWord {
   def player(using corpus: Corpus): WordlePlayer = new WordlePlayer {

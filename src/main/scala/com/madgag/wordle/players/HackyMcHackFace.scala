@@ -1,7 +1,8 @@
 package com.madgag.wordle.players
 
+import com.madgag.wordle.*
 import com.madgag.wordle.approaches.tartan.{Candidates, FeedbackTable}
-import com.madgag.wordle.{PlayAnalysis, *}
+import com.madgag.wordle.evidence.Evidence
 
 object HackyMcHackFace {
   def playing(gameMode: GameMode)(using corpus: Corpus): WordlePlayer = {

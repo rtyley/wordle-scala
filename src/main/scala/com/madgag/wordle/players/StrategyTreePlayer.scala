@@ -2,6 +2,7 @@ package com.madgag.wordle.players
 
 import com.madgag.wordle.*
 import com.madgag.wordle.approaches.tartan.Candidates
+import com.madgag.wordle.evidence.Evidence
 import com.madgag.wordle.players.StrategyTreePlayer.Coverage
 
 import scala.collection.immutable.SortedSet

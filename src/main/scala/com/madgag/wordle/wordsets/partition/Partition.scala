@@ -1,7 +1,7 @@
 package com.madgag.wordle.wordsets.partition
 
-import com.madgag.wordle.{WordFeedback, pooling}
 import com.madgag.wordle.approaches.tartan.Candidates
+import com.madgag.wordle.pooling
 import com.madgag.wordle.pooling.{Pool, Pooled}
 import com.madgag.wordle.wordsets.WordSet
 

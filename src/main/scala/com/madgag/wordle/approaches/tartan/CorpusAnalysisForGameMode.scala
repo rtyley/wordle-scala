@@ -1,9 +1,11 @@
 package com.madgag.wordle.approaches.tartan
 
 import com.madgag.scala.collection.decorators.*
-import com.madgag.wordle.GameMode.*
-import com.madgag.wordle.WordFeedback.feedbackFor
 import com.madgag.wordle.*
+import com.madgag.wordle.GameMode.*
+import com.madgag.wordle.evidence.WordFeedback.feedbackFor
+import com.madgag.wordle.evidence.{Evidence, WordFeedback}
+import com.madgag.wordle.util.LocalFileCache
 import com.madgag.wordle.wordsets.*
 import com.madgag.wordle.wordsets.partition.{FeedbackPartition, Partition}
 

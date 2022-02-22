@@ -5,6 +5,7 @@ import com.madgag.wordle.Game.WordNotPlayable.NotValidInHardMode
 import com.madgag.wordle.GameMode.Hard.PlayConstraint.NthLetterMustBe
 import com.madgag.wordle.Wordle.WordIndices
 import com.madgag.wordle.approaches.tartan.Candidates
+import com.madgag.wordle.evidence.Evidence
 
 import scala.collection.immutable.SortedSet
 

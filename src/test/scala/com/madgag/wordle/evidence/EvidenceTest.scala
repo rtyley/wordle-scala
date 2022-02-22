@@ -1,7 +1,10 @@
-package com.madgag.wordle
+package com.madgag.wordle.evidence
 
-import com.madgag.wordle.Evidence.*
-import com.madgag.wordle.WordFeedback.feedbackFor
+import com.madgag.wordle.*
+import com.madgag.wordle.Corpus
+import com.madgag.wordle.evidence.*
+import com.madgag.wordle.evidence.Evidence.*
+import com.madgag.wordle.evidence.WordFeedback.feedbackFor
 import org.scalatest.EitherValues
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers

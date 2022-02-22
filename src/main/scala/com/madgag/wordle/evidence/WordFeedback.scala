@@ -1,13 +1,15 @@
-package com.madgag.wordle
+package com.madgag.wordle.evidence
 
 import com.madgag.scala.collection.decorators.*
-import com.madgag.wordle.LetterFeedback.*
-import com.madgag.wordle.WordFeedback.Calculation.BlankCensus
+import com.madgag.wordle.*
 import com.madgag.wordle.Wordle.{Letter, WordIndices, WordLength}
+import com.madgag.wordle.evidence.LetterFeedback
+import com.madgag.wordle.evidence.LetterFeedback.*
+import com.madgag.wordle.evidence.WordFeedback.Calculation.BlankCensus
 import org.typelevel.literally.Literally
-import scala.util.*
 
 import scala.collection.immutable.Queue
+import scala.util.*
 
 class WordFeedback(val underlying: Byte) extends AnyVal {
   def toSeq: Seq[LetterFeedback] = {

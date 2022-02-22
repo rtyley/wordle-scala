@@ -1,4 +1,4 @@
-package com.madgag.wordle
+package com.madgag.wordle.evidence
 
 type FrequencyMap[T] = Map[T, Int]
 

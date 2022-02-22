@@ -1,23 +1,23 @@
 package com.madgag.wordle
 
 import com.google.common.io.{CharStreams, Resources}
-import com.madgag.wordle.WordFeedback.feedbackFor
+import com.madgag.scala.collection.decorators.*
 import com.madgag.wordle.approaches.tartan.Candidates
+import com.madgag.wordle.evidence.WordFeedback.feedbackFor
+import com.madgag.wordle.wordsets.{ShortArrayWordSet, WordSet}
 
-import java.io.{File, FileInputStream, FileOutputStream, ObjectInputStream, ObjectOutputStream}
+import java.io.*
 import java.nio.charset.StandardCharsets.UTF_8
-import scala.jdk.CollectionConverters.*
 import java.nio.charset.{Charset, StandardCharsets}
 import java.nio.file.{Files, Path}
 import java.util.zip.{GZIPInputStream, GZIPOutputStream}
 import scala.collection.immutable.{ArraySeq, BitSet, SortedMap, SortedSet}
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
-import scala.util.{Random, Using}
+import scala.jdk.CollectionConverters.*
 import scala.util.hashing.MurmurHash3
-import concurrent.ExecutionContext.Implicits.global
-import com.madgag.scala.collection.decorators.*
-import com.madgag.wordle.wordsets.{ShortArrayWordSet, WordSet}
+import scala.util.{Random, Using}
 
 case class Corpus(commonWords: SortedSet[Word], uncommonWords: SortedSet[Word]) {
   val commonWordsOrdered: IndexedSeq[Word] = commonWords.toIndexedSeq.sorted

@@ -5,12 +5,13 @@ import com.madgag.wordle.Corpus.{Full, fromAsteriskFormat, getClass}
 import com.madgag.wordle.GameMode.Normal
 import com.madgag.wordle.PlayAnalysis.forGameMode
 import com.madgag.wordle.Strategy.Win
-import com.madgag.wordle.WordFeedback.fromChars
+import com.madgag.wordle.evidence.WordFeedback
+import com.madgag.wordle.evidence.WordFeedback.fromChars
 import org.scalatest.EitherValues
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import scala.jdk.CollectionConverters.*
 
+import scala.jdk.CollectionConverters.*
 import java.nio.charset.StandardCharsets.UTF_8
 
 class StrategyTest extends AnyFlatSpec with Matchers {

@@ -1,9 +1,10 @@
 package com.madgag.wordle
 
-import com.madgag.wordle.Evidence.*
 import com.madgag.wordle.Game.WordNotPlayable
-import com.madgag.wordle.GameMode.{Hard, Normal}
 import com.madgag.wordle.Game.WordNotPlayable.*
+import com.madgag.wordle.GameMode.{Hard, Normal}
+import com.madgag.wordle.evidence.Evidence
+import com.madgag.wordle.evidence.Evidence.*
 import com.madgag.wordle.wordsets.WordSet
 
 import scala.annotation.tailrec

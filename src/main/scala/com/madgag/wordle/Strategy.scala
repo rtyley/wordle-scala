@@ -2,6 +2,7 @@ package com.madgag.wordle
 
 import com.madgag.wordle.Node.Choice
 import com.madgag.wordle.approaches.tartan.{Candidates, FeedbackTable}
+import com.madgag.wordle.evidence.{Evidence, WordFeedback}
 import com.madgag.wordle.strategy_files.Line
 
 import scala.collection.immutable.SortedMap

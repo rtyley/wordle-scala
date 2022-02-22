@@ -1,8 +1,6 @@
-package com.madgag.wordle
+package com.madgag.wordle.util
 
-import com.madgag.wordle.WordFeedback.feedbackFor
-
-import java.io.{File, FileInputStream, FileOutputStream, ObjectInputStream, ObjectOutputStream}
+import java.io.*
 import java.nio.file.{Files, Path}
 import java.util.zip.{GZIPInputStream, GZIPOutputStream}
 import scala.util.Using

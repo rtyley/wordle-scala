@@ -1,11 +1,12 @@
 package com.madgag.wordle
 
+import alleycats.std.set.*
 import cats.*
 import cats.data.*
 import cats.implicits.*
-import alleycats.std.set._
 import com.madgag.wordle.PlayAnalysis.{BrucieBonusAndIncompleteFParamsKnowledge, FResult, IncompleteFParamsKnowledge}
 import com.madgag.wordle.approaches.tartan.{Candidates, FeedbackTable}
+import com.madgag.wordle.evidence.WordFeedback
 
 import java.util.concurrent.atomic.{AtomicLong, AtomicReference, LongAdder}
 

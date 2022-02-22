@@ -1,4 +1,4 @@
-package com.madgag.wordle
+package com.madgag.wordle.evidence
 
 enum LetterFeedback(val character: Char, val emoji: String, val ansiColor: fansi.Attr, jsName: String) {
   case Incorrect extends LetterFeedback('B',"⬜", fansi.Color.LightGray, "absent")
@@ -7,8 +7,7 @@ enum LetterFeedback(val character: Char, val emoji: String, val ansiColor: fansi
 }
 
 object LetterFeedback {
-  def fromCharacter(character: Char): LetterFeedback =
-    LetterFeedback.values.find(_.character == character).get
+  def fromCharacter(character: Char): LetterFeedback = LetterFeedback.values.find(_.character == character).get
   
   def atStartOfString(stringStartingWithEmoji: String): LetterFeedback =
     LetterFeedback.values.find(lf => stringStartingWithEmoji.startsWith(lf.emoji)).get

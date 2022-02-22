@@ -1,12 +1,12 @@
 package com.madgag.wordle.wordsets
 
-import scala.collection.{IterableOnce, SpecificIterableFactory}
 import com.madgag.wordle.WordId
 import com.madgag.wordle.wordsets.WordSet.intern
 
 import java.util
 import scala.Array.emptyShortArray
 import scala.collection.immutable.SortedSet
+import scala.collection.{IterableOnce, SpecificIterableFactory}
 import scala.util.Sorting
 
 class ShortArrayWordSet(elems: Array[Short]) extends WordSet {

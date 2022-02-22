@@ -1,8 +1,7 @@
 package com.madgag.wordle.wordsets.partition
 
+import com.madgag.wordle.evidence.WordFeedback
 import com.madgag.wordle.*
-import com.madgag.wordle.WordFeedback
-import com.madgag.wordle.pooling
 import com.madgag.wordle.wordsets.WordSet
 
 object FeedbackPartition {

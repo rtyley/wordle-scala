@@ -1,14 +1,12 @@
 package com.madgag.wordle
 
-import Evidence.*
 import com.madgag.wordle.approaches.tartan.{Candidates, FeedbackTable}
-
-import scala.collection.immutable.SortedSet
+import com.madgag.wordle.evidence.Evidence
 import com.madgag.wordle.wordsets.*
 
 import java.nio.file.{Files, Paths}
+import scala.collection.immutable.SortedSet
 import scala.jdk.CollectionConverters.*
-import java.nio.file.{Files, Paths}
 
 case class SpectatorAnalyst(gameMode: GameMode)(using corpus: Corpus) {
   val feedbackTable: FeedbackTable = FeedbackTable.obtainFor(gameMode)

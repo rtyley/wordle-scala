@@ -4,8 +4,8 @@ import com.madgag.wordle.*
 import com.madgag.wordle.Corpus.{Full, fromAsteriskFormat}
 import com.madgag.wordle.GameMode.Normal
 import com.madgag.wordle.PlayAnalysis.forGameMode
-import com.madgag.wordle.WordFeedback.{CompleteSuccess, fromChars}
-import com.madgag.wordle.{Corpus, WordFeedback, WordGuessSum}
+import com.madgag.wordle.evidence.WordFeedback.{CompleteSuccess, fromChars}
+import com.madgag.wordle.{Corpus, WordGuessSum}
 import org.scalatest.OptionValues
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers

@@ -1,5 +1,7 @@
 package com.madgag.wordle
 
+import com.madgag.wordle.evidence.Evidence
+
 object DriveWebPage {
 
   def javascriptCommandsFor(evidenceList: Seq[Evidence], nextGuess: Option[String] = None): String = {

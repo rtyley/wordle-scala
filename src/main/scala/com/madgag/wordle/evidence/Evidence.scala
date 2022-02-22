@@ -1,10 +1,11 @@
-package com.madgag.wordle
+package com.madgag.wordle.evidence
 
-import com.madgag.wordle.LetterFeedback.Correct
-import com.madgag.wordle.WordFeedback.feedbackFor
 import com.madgag.scala.collection.decorators.*
-import com.madgag.wordle.Evidence.Summary
+import com.madgag.wordle.*
 import com.madgag.wordle.Wordle.WordIndices
+import com.madgag.wordle.evidence.Evidence.Summary
+import com.madgag.wordle.evidence.LetterFeedback.Correct
+import com.madgag.wordle.evidence.WordFeedback.feedbackFor
 
 import scala.collection.immutable.SortedMap
 
@@ -29,11 +30,10 @@ case class Evidence(guess: Word, wordFeedback: WordFeedback) {
 }
 
 object Evidence {
-  def evidenceFrom(candidate: Word, actual: Word) = Evidence(candidate, feedbackFor(candidate, actual))
+  def evidenceFrom(candidate: Word, actual: Word) = evidence.Evidence(candidate, feedbackFor(candidate, actual))
 
   extension (word: Word)
     def compliesWith(evidence: Evidence): Boolean = feedbackFor(evidence.guess, word) == evidence.wordFeedback
-
 
   case class Summary(misplacedLetters: FrequencyMap[Letter], correctLettersByIndex: SortedMap[Int, Letter]) {
     val indicesWhichAreNotCorrect: Seq[Int] = WordIndices.filter(!correctLettersByIndex.contains(_))

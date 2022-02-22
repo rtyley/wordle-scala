@@ -1,6 +1,6 @@
 package com.madgag.wordle
 
-import com.madgag.wordle.Evidence.evidenceFrom
+import com.madgag.wordle.evidence.Evidence.evidenceFrom
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 

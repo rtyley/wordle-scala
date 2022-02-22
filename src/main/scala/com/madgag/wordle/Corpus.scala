@@ -53,8 +53,7 @@ case class Corpus(commonWords: SortedSet[Word], uncommonWords: SortedSet[Word]) 
 
 
   def reducedByAFactorOf(factor: Int): Corpus = {
-    def winnow(words: SortedSet[Word]):SortedSet[Word] =
-      SortedSet.from(words.zipWithIndex.collect {case (e,i) if (i % factor) == 0 => e})
+    def winnow(words: SortedSet[Word]): SortedSet[Word] = SortedSet.from(words.grouped(factor).map(_.head))
     
     Corpus(winnow(commonWords), winnow(uncommonWords))
   }

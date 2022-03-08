@@ -1,7 +1,8 @@
 package com.madgag.wordle
 
+import cats.data.{NonEmptySeq, State, *}
 import com.madgag.wordle.Game.WordNotPlayable
-import com.madgag.wordle.Game.WordNotPlayable.*
+import com.madgag.wordle.Game.WordNotPlayable.{NotInWordList, *}
 import com.madgag.wordle.GameMode.{Hard, Normal}
 import com.madgag.wordle.evidence.Evidence
 import com.madgag.wordle.evidence.Evidence.*
@@ -9,45 +10,24 @@ import com.madgag.wordle.wordsets.WordSet
 
 import scala.annotation.tailrec
 import scala.collection.immutable.SortedSet
+import cats.implicits.*
 
-case class Game(targetWord: Word, gameMode: GameMode = Normal)(using val corpus: Corpus) {
+trait Playable {
+  def play(word: Word): Either[WordNotPlayable, Game.State]
+}
 
-  val start: State = State(Seq.empty)
+case class Game(targetWord: Word, gameMode: GameMode = Normal)(using val corpus: Corpus) extends Playable {
 
-  def playWith(wordlePlayer: WordlePlayer) = start.playWith(wordlePlayer)
+  def checkWordListFor(word: Word): Option[WordNotPlayable] = Option.when(!corpus.contains(word))(NotInWordList)
 
-  case class State(playedWords: Seq[Word]) {
+  def checkWordNotPlayable(word: Word, mostRecentEvidence: Evidence): Option[WordNotPlayable] =
+    checkWordListFor(word).orElse(gameMode.checkConstraintsFor(word)(mostRecentEvidence))
 
-    val guessesTaken: Int = playedWords.size
+  def play(word: Word): Either[WordNotPlayable, Game.State] =
+    checkWordListFor(word).toLeft(Game.State(this, NonEmptySeq.one(word)))
 
-    val evidenceSoFar: Seq[Evidence] = playedWords.map(evidenceFrom(_, targetWord))
-    val mostRecentEvidence: Option[Evidence] = evidenceSoFar.lastOption
-
-    val isSuccess: Boolean = mostRecentEvidence.exists(_.isSuccess)
-
-    val shouldStopNow: Boolean = isSuccess || (guessesTaken == MaxGuesses)
-
-    def checkWordNotPlayable(word: Word): Option[WordNotPlayable] =
-      if (!corpus.contains(word)) Some(NotInWordList) else mostRecentEvidence.flatMap(gameMode.checkConstraintsFor(word))
-
-    def play(word: Word): Either[WordNotPlayable, State] = checkWordNotPlayable(word).toLeft(State(playedWords :+ word))
-
-    def playWith(wordlePlayer: WordlePlayer): Either[WordNotPlayable, State] = playWith(evidenceSoFar.foldLeft(wordlePlayer.start) {
-      case (player, evidence) => player.updateWith(evidence)
-    })
-
-    private def playWith(playerState: WordlePlayer.State): Either[WordNotPlayable, State] = {
-      play(playerState.move).flatMap { newGameState =>
-        if (newGameState.shouldStopNow) Right(newGameState) else
-          newGameState.playWith(playerState.updateWith(newGameState.mostRecentEvidence.get))
-      }
-    }
-
-    lazy val text: String = {
-      for ((evidence, index) <- evidenceSoFar.zipWithIndex) yield s"${index+1}. ${evidence.ansiColouredString}"
-    }.mkString("\n")
-  }
-
+  def playWith(wordlePlayer: WordlePlayer): Either[WordNotPlayable, Game.State] =
+    play(wordlePlayer.start.move).flatMap(_.playWith(wordlePlayer))
 }
 
 object Game {
@@ -55,9 +35,43 @@ object Game {
     case NotInWordList
     case NotValidInHardMode(problem: Hard.PlayConstraint)
 
-  def totalGuessSumFor(wordlePlayer: WordlePlayer, gameMode: GameMode)(using corpus: Corpus): Int = {
+  trait Playable {
+    def play(word: Word): Either[WordNotPlayable, State]
+  }
+
+  case class State(game: Game, playedWords: NonEmptySeq[Word]) extends Playable {
+
+    val guessesTaken: Long = playedWords.size
+
+    val evidenceSoFar: NonEmptySeq[Evidence] = playedWords.map(evidenceFrom(_, game.targetWord))
+    val mostRecentEvidence: Evidence = evidenceSoFar.last
+
+    val isSuccess: Boolean = mostRecentEvidence.isSuccess
+
+    val shouldStopNow: Boolean = isSuccess || (guessesTaken == MaxGuesses)
+
+    def play(word: Word): Either[WordNotPlayable, State] =
+      game.checkWordNotPlayable(word, mostRecentEvidence).toLeft(State(game, playedWords :+ word))
+
+    def playWith(wordlePlayer: WordlePlayer): Either[WordNotPlayable, State] =
+      playWith(evidenceSoFar.foldLeft(wordlePlayer.start)(_ updateWith _))
+
+    private def playWith(playerState: WordlePlayer.State): Either[WordNotPlayable, State] = {
+      play(playerState.move).flatMap { newGameState =>
+        if (newGameState.shouldStopNow) Right(newGameState) else
+          newGameState.playWith(playerState.updateWith(newGameState.mostRecentEvidence))
+      }
+    }
+
+    lazy val text: String = {
+      for ((evidence, index) <- evidenceSoFar.toSeq.zipWithIndex) yield s"${index+1}. ${evidence.ansiColouredString}"
+    }.mkString("\n")
+  }
+
+
+  def totalGuessSumFor(wordlePlayer: WordlePlayer, gameMode: GameMode)(using corpus: Corpus): Long = {
     corpus.commonWords.toSeq.map { targetWord =>
-      val endGameState = Game(targetWord, gameMode).start.playWith(wordlePlayer).toOption.get
+      val endGameState = Game(targetWord, gameMode).playWith(wordlePlayer).toOption.get
       require(endGameState.isSuccess)
       endGameState.guessesTaken
     }.sum

@@ -22,7 +22,7 @@ class HackyMcHackFaceTest extends AnyFlatSpec with Matchers with EitherValues {
 
     val player = HackyMcHackFace.playing(Normal)
 
-    Game(corpus.commonWords.head, Normal).start.playWith(player)
+    Game(corpus.commonWords.head, Normal).playWith(player)
 
     Game.totalGuessSumFor(player, Normal) shouldBe 50
   }

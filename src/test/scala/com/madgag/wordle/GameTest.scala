@@ -15,7 +15,7 @@ class GameTest extends AnyFlatSpec with Matchers with EitherValues {
 
     val game = Game("robin", Normal)
 
-    val after1stGuess = game.start.play("salet").value
+    val after1stGuess = game.play("salet").value
     // println(s"After 1st guess ${after1stGuess.possibleWords.size} possible words")
     val after2ndGuess = after1stGuess.play("boing").value
 
